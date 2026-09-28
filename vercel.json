@@ -1,0 +1,6 @@
+{
+  "installCommand": "cd web && npm ci",
+  "buildCommand": "cd web && npm run build:demo",
+  "outputDirectory": "web/dist-demo",
+  "framework": null
+}
