@@ -43,7 +43,8 @@ export function assessAsset(results) {
     return {
       decision: 'inspect', title: 'Check on the next visit', action: "Schedule an inspection. Don't send anyone out urgently yet.",
       reason: `Only the ${SENSOR_NAME[key].toLowerCase()} sees a problem (${r.name}, very confident); `
-        + (others.length ? `the ${others.join(' and ')} reads healthy.` : 'add a second sensor type (e.g. a thermal image) to confirm.'),
+        + (others.length ? `the ${others.join(' and ')} reads healthy.`
+          : `add a second sensor type (${key === 'thermal' ? 'e.g. a sound + vibration capture' : 'e.g. a thermal image'}) to confirm.`),
     };
   }
   return { decision: 'monitor', title: 'Keep an eye on it', action: 'No visit needed. Take another reading later to see if it persists.',

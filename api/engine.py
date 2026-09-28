@@ -323,7 +323,8 @@ def assess_asset(results: dict[str, dict]) -> dict:
                 "action": "Schedule an inspection. Don't send anyone out urgently yet.",
                 "reason": f"Only the {names[key].lower()} sees a problem ({r['name']}, very confident); "
                           + (f"the {' and '.join(o.lower() for o in others)} reads healthy." if others else
-                             "add a second sensor type (e.g. a thermal image) to confirm.")}
+                             "add a second sensor type ("
+                             + ("e.g. a sound + vibration capture" if key == "thermal" else "e.g. a thermal image") + ") to confirm.")}
     return {"decision": "monitor", "title": "Keep an eye on it",
             "action": "No visit needed. Take another reading later to see if it persists.",
             "reason": f"Only the {names[key].lower()} flags {r['name']}, and it isn't sure."}

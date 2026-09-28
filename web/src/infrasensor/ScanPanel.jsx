@@ -91,19 +91,22 @@ export default function ScanPanel({ onClose }) {
             Its live sensors will be compared with whatever you upload.
           </p>
         )}
+        {api.DEMO && (
+          <SampleGallery samples={samples} picked={files.map((f) => f.name)} onPick={add}
+            onScenario={(list, machineId) => { setFiles(list); setOverrides(list.map(() => null)); setMachine(machineId || ''); }} />
+        )}
         <button className="ns-btn" onClick={() => input.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
           onDrop={(e) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}
-          style={{ width: '100%', boxSizing: 'border-box', minHeight: files.length ? 64 : 132, borderRadius: 20, border: `2px dashed ${drag ? 'var(--acc)' : 'var(--line2)'}`, background: drag ? 'var(--panel2)' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+          style={{ width: '100%', boxSizing: 'border-box', minHeight: files.length || api.DEMO ? 64 : 132, marginTop: api.DEMO ? 12 : 0, borderRadius: 20, border: `2px dashed ${drag ? 'var(--acc)' : 'var(--line2)'}`, background: drag ? 'var(--panel2)' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
           <span style={{ textAlign: 'center', fontSize: 14, color: 'var(--tx2)', lineHeight: '20px' }}>
-            {!files.length && <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style={{ display: 'block', margin: '0 auto 6px', color: 'var(--acc)' }}><path className="ns-ic" d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 14.5v4a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-4" /></svg>}
-            <strong style={{ color: 'var(--tx)' }}>{files.length ? '+ Add another file from this machine' : 'Choose or drop sensor files'}</strong>
-            {!files.length && <><br />Spectrograms, thermal images, concrete photos or sensor CSVs. Several at once is fine.</>}
+            {!files.length && !api.DEMO && <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style={{ display: 'block', margin: '0 auto 6px', color: 'var(--acc)' }}><path className="ns-ic" d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 14.5v4a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-4" /></svg>}
+            <strong style={{ color: 'var(--tx)' }}>{files.length ? '+ Add another file from this machine' : api.DEMO ? 'Or upload your own file' : 'Choose or drop sensor files'}</strong>
+            {!files.length && !api.DEMO && <><br />Spectrograms, thermal images, concrete photos or sensor CSVs. Several at once is fine.</>}
           </span>
         </button>
         <input ref={input} type="file" accept={ACCEPT} multiple hidden onChange={(e) => { add(e.target.files); e.target.value = ''; }} />
 
-        {api.DEMO && <SampleGallery samples={samples} onPick={add} />}
 
         {busy && <p style={{ margin: '14px 2px 0', fontSize: 14, color: 'var(--tx2)' }}>Detecting file types and running the models…</p>}
         {error && <p role="alert" style={{ margin: '14px 2px 0', fontSize: 14, color: 'var(--crit)' }}>{error}</p>}
@@ -401,47 +404,162 @@ function ReliabilityCard({ model }) {
   );
 }
 
-const GROUPS = [['machine', 'Sound + vibration captures'], ['thermal', 'Thermal images'], ['crack', 'Concrete photos'], ['sound', 'Sound spectrograms'], ['bearing', 'Vibration spectrograms']];
+const FOLDERS = [
+  { id: 'machine', title: 'Sound + vibration', blurb: 'A microphone and vibration sensors on the same motor, recorded together',
+    icon: 'M9 4h6v16H9zM5 8v8M19 8v8M2 10v4M22 10v4' },
+  { id: 'thermal', title: 'Thermal camera', blurb: 'Infrared photos of an electric motor: hotter is brighter',
+    icon: 'M10 13.6V5.5a2 2 0 0 1 4 0v8.1a4 4 0 1 1-4 0zM12 10v6' },
+  { id: 'crack', title: 'Concrete photos', blurb: 'Close-ups and whole walls, with and without cracks',
+    icon: 'M12 3l-2.5 5 3.5 3-3.5 4 2.5 6M5 4v16M19 4v16' },
+  { id: 'sound', title: 'Microphone', blurb: 'What machines and water pipes sound like, as a picture of the sound',
+    icon: 'M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4' },
+  { id: 'bearing', title: 'Vibration', blurb: 'Vibration patterns from worn and healthy bearings',
+    icon: 'M3 12h3l1.5-4 3 8 3-8 3 8 1.5-4h3' },
+];
 
-// Demo build only: one-click sample files (the static demo has results for exactly these).
-function SampleGallery({ samples, onPick }) {
+// One-click stories that show the sensors agreeing or disagreeing.
+const SCENARIOS = [
+  { title: 'Two sensors agree', note: 'Faulty motor + overheating photo', result: 'Raise a ticket',
+    files: ['bearing_fault__heldout.csv', 'stator_short_circuit__heldout.png'] },
+  { title: 'Only one sensor sees it', note: 'Faulty motor + normal thermal photo', result: 'Check next visit',
+    files: ['bearing_fault__heldout.csv', 'healthy__heldout.png'] },
+  { title: 'All healthy', note: 'Healthy motor, from three sensors', result: 'No problem',
+    files: ['healthy__motor.png', 'healthy_3.png', 'healthy__heldout.png'] },
+  { title: 'Crack + strained column', note: 'Crack photo, linked to Parking column 2', result: 'Raise a ticket',
+    files: ['crack__heldout.jpg'], machine: 'Pier P2' },
+];
+
+const BEARING_NAMES = { ball: 'Ball fault', cage: 'Cage fault', inner_race: 'Inner race fault', outer_race: 'Outer race fault', healthy: 'Healthy' };
+
+// Readable name + the true answer for a sample file (the file names encode the real label).
+function describe(s) {
+  const stem = s.name.replace(/\.(png|jpe?g|bmp|csv)$/i, '');
+  if (s.folder === 'bearing') {
+    const [, base, n] = stem.match(/^(.*)_(\d+)$/) || [null, stem, ''];
+    return { title: `${BEARING_NAMES[base] || pretty(base)}${base === 'healthy' ? ` #${n}` : ''}`, truth: BEARING_NAMES[base] || pretty(base) };
+  }
+  const [label, rest = ''] = stem.split('__');
+  const truth = pretty(label);
+  const extra = rest.startsWith('composite') ? 'whole wall' : rest === 'motor' ? 'motor' : rest === 'pipe-no-leak' ? 'water pipe' : rest.endsWith('_2') ? 'second photo' : '';
+  return { title: extra ? `${truth} · ${extra}` : truth, truth };
+}
+
+const thumbOf = (s) => (s.file ? `/demo/${s.file}` : s.item?.result?.preview || null);
+
+function Icon({ d, size = 20 }) {
+  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true"><path className="ns-ic" d={d} /></svg>;
+}
+
+// Demo build only: sample files in folders by sensor type, plus ready-made scenarios.
+function SampleGallery({ samples, picked, onPick, onScenario }) {
   const [open, setOpen] = useState(true);
+  const [folder, setFolder] = useState(null);
   if (!samples.length) return null;
-  const pick = async (s) => {
+  const byName = Object.fromEntries(samples.map((s) => [s.name, s]));
+  const toFile = async (s) => {
     const blob = s.file ? await fetch(`/demo/${s.file}`).then((r) => r.blob()) : new Blob([], { type: 'text/csv' });
-    onPick([new File([blob], s.name, { type: blob.type })]);
+    return new File([blob], s.name, { type: blob.type });
   };
-  const label = (s) => s.name.replace(/\.(png|jpe?g|bmp|csv)$/i, '').replace(/__heldout(_2)?/, '').replace(/__/g, ' · ').replace(/_/g, ' ');
-  return (
-    <div style={{ marginTop: 12, borderRadius: 18, border: '1.5px solid var(--line)' }}>
-      <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', padding: '10px 12px', fontSize: 13, fontWeight: 700 }}>
-        <span style={{ flexGrow: 1 }}>Try a sample</span><span style={{ color: 'var(--tx2)', fontWeight: 500 }}>{open ? 'Hide' : 'Show'}</span>
+  const pick = async (s) => { onPick([await toFile(s)]); setOpen(false); };
+  const runScenario = async (sc) => {
+    onScenario(await Promise.all(sc.files.map((n) => toFile(byName[n]))), sc.machine);
+    setOpen(false);
+  };
+  const current = FOLDERS.find((f) => f.id === folder);
+  const inFolder = current ? samples.filter((s) => s.folder === current.id) : [];
+
+  if (!open) {
+    return (
+      <button className="ns-btn ns-gh" onClick={() => setOpen(true)}
+        style={{ width: '100%', marginTop: 12, height: 44, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}>
+        <Icon d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z" size={18} />
+        Open sample files
       </button>
-      {open && (
-        <div style={{ padding: '0 12px 12px' }}>
-          {GROUPS.map(([folder, title]) => {
-            const list = samples.filter((s) => s.folder === folder);
-            if (!list.length) return null;
-            return (
-              <div key={folder} style={{ marginTop: 6 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)', margin: '4px 0' }}>{title}</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {list.map((s) => (
-                    <button key={s.name} className="ns-btn ns-gh" onClick={() => pick(s)} title={s.name}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px 4px 4px', borderRadius: 999, fontSize: 12 }}>
-                      {s.file ? <img src={`/demo/${s.file}`} alt="" style={{ width: 24, height: 24, borderRadius: 999, objectFit: 'cover' }} />
-                        : <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--panel2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>CSV</span>}
-                      {label(s)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          <p style={{ margin: '8px 0 0', fontSize: 11, lineHeight: '16px', color: 'var(--tx2)' }}>
-            Samples come from recordings the models never trained on. Pick several, or choose a machine above, to see the sensors agree or disagree.
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 12, borderRadius: 20, border: '1.5px solid var(--line)', padding: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        {current ? (
+          <button className="ns-btn" onClick={() => setFolder(null)} aria-label="Back to folders"
+            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700, color: 'var(--tx2)' }}>
+            <Icon d="M15 6l-6 6 6 6" size={18} /> Samples
+          </button>
+        ) : <span style={{ fontSize: 13, fontWeight: 700 }}>Sample files</span>}
+        {current && <span style={{ fontSize: 13, fontWeight: 700 }}>/ {current.title}</span>}
+        <span style={{ flexGrow: 1 }} />
+        <button className="ns-btn" onClick={() => setOpen(false)} style={{ fontSize: 12, color: 'var(--tx2)' }}>Hide</button>
+      </div>
+
+      {!current && (
+        <>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)', letterSpacing: '.05em', textTransform: 'uppercase', margin: '2px 0 6px' }}>Try a pair</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginBottom: 14 }}>
+            {SCENARIOS.map((sc) => (
+              <button key={sc.title} className="ns-btn ns-row" onClick={() => runScenario(sc)}
+                style={{ borderRadius: 14, padding: '10px 12px', border: '1.5px solid var(--line)', textAlign: 'left' }}>
+                <span style={{ display: 'flex', gap: 3, marginBottom: 6 }}>
+                  {sc.files.map((n) => thumbOf(byName[n]) && <img key={n} src={thumbOf(byName[n])} alt="" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'cover' }} />)}
+                </span>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 700 }}>{sc.title}</span>
+                <span style={{ display: 'block', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>{sc.note}</span>
+                <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--acc)', marginTop: 4 }}>→ {sc.result}</span>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)', letterSpacing: '.05em', textTransform: 'uppercase', margin: '2px 0 6px' }}>Folders by sensor</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+            {FOLDERS.map((f) => {
+              const list = samples.filter((s) => s.folder === f.id);
+              const previews = list.map(thumbOf).filter(Boolean).slice(0, 3);
+              return (
+                <button key={f.id} className="ns-btn ns-row" onClick={() => setFolder(f.id)}
+                  style={{ borderRadius: 16, padding: 12, border: '1.5px solid var(--line)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--mint)', color: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon d={f.icon} size={18} />
+                    </span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 14, fontWeight: 700, lineHeight: '17px' }}>{f.title}</span>
+                      <span className="ns-num" style={{ fontSize: 11, color: 'var(--tx2)' }}>{list.length} samples</span>
+                    </span>
+                  </span>
+                  <span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>{f.blurb}</span>
+                  <span style={{ display: 'flex', gap: 4 }}>
+                    {previews.map((u) => <img key={u.slice(-40)} src={u} alt="" style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }} />)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {current && (
+        <>
+          <p style={{ margin: '0 0 10px', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>{current.blurb}. Tap one to scan it.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(118px, 1fr))', gap: 8 }}>
+            {inFolder.map((s) => {
+              const d = describe(s);
+              const added = picked.includes(s.name);
+              const src = thumbOf(s);
+              return (
+                <button key={s.name} className="ns-btn ns-row" onClick={() => !added && pick(s)} disabled={added} title={s.name}
+                  style={{ borderRadius: 14, padding: 8, border: `1.5px solid ${added ? 'var(--acc)' : 'var(--line)'}`, textAlign: 'left', opacity: added ? 0.7 : 1 }}>
+                  {src ? <img src={src} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                    : <span style={{ display: 'block', width: '100%', aspectRatio: '1', borderRadius: 10, background: 'var(--panel2)' }} />}
+                  <span style={{ display: 'block', fontSize: 13, fontWeight: 700, marginTop: 6, lineHeight: '16px' }}>{d.title}</span>
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--tx2)', marginTop: 2 }}>{added ? '✓ Added' : `True answer: ${d.truth}`}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 11, lineHeight: '16px', color: 'var(--tx2)' }}>
+            None of these were used to train the models. Add samples from two folders, or pick a machine above, to see the sensors agree or disagree.
           </p>
-        </div>
+        </>
       )}
     </div>
   );
