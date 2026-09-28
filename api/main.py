@@ -1,4 +1,4 @@
-"""Infrasensor API: serves the live site snapshot and model inference to the React UI.
+"""Raksha API: serves the live site snapshot and model inference to the React UI.
 
 Run from the repo root:
     uvicorn api.main:app --reload --port 8000
@@ -24,7 +24,7 @@ from wallsense.train_router import detect_image
 from wallsense.preprocessing import fusion_features as ff
 from api.verdict import VerdictUnavailable, gemini_verdict
 
-app = FastAPI(title="Infrasensor API")
+app = FastAPI(title="Raksha API")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"], allow_headers=["*"])
 
 _engine: Engine | None = None

@@ -7,7 +7,7 @@ export default function renderTemplate(v) {
 <div className={v.themeClass} style={css("width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; background: var(--bg); color: var(--tx); font-family: 'Manrope', system-ui, sans-serif; -webkit-font-smoothing: antialiased")}>
   <nav aria-label="Primary" style={css("width: 72px; flex-shrink: 0; position: relative; box-sizing: border-box; padding: 14px 6px 14px 10px; display: flex; z-index: 3")}>
     <div style={css("position: relative; width: 56px; border-radius: 30px; background: var(--panel); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; padding: 12px 0 16px; gap: 10px")}>
-      <div aria-label="Infrasensor" style={css("width: 40px; height: 40px; border-radius: 50%; background: var(--mint); color: var(--tx); display: flex; align-items: center; justify-content: center; margin-bottom: 8px")}>
+      <div aria-label="Raksha" style={css("width: 40px; height: 40px; border-radius: 50%; background: var(--mint); color: var(--tx); display: flex; align-items: center; justify-content: center; margin-bottom: 8px")}>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path className="ns-ic" d="M12 4.5c3.6 0 6.5 2.9 6.5 6.5 0 1.3-.4 2.5-1 3.5M12 4.5C8.4 4.5 5.5 7.4 5.5 11c0 1.3.4 2.5 1 3.5M9 18.5c.9.6 1.9 1 3 1s2.1-.4 3-1M12 9.5v3.5l2 1.5" style={css("stroke-width: 1.8px")}>
           </path>
@@ -1559,7 +1559,7 @@ export default function renderTemplate(v) {
       </div>
     </div>
   </aside>
-  <button className="ns-btn ns-launch" onClick={v.openChat} aria-label="Ask Infrasensor" style={css(`position: absolute; right: 16px; top: ${v.launchTop}; bottom: ${v.launchBottom}; z-index: 19; width: 56px; height: 56px; border-radius: 28px 28px 8px 28px; background: var(--acc); color: var(--accTx); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow)`)}>
+  <button className="ns-btn ns-launch" onClick={v.openChat} aria-label="Ask Raksha" style={css(`position: absolute; right: 16px; top: ${v.launchTop}; bottom: ${v.launchBottom}; z-index: 19; width: 56px; height: 56px; border-radius: 28px 28px 8px 28px; background: var(--acc); color: var(--accTx); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow)`)}>
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
       <path className="ns-ic" d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7L7.5 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5zM8.5 11h.01M12 11h.01M15.5 11h.01" style={css("stroke-width: 2px")}>
       </path>
@@ -1571,7 +1571,7 @@ export default function renderTemplate(v) {
   </button>
   <div onClick={v.closeChat} aria-hidden="true" style={css(`position: absolute; inset: 0; z-index: 40; background: rgba(8, 20, 20, ${v.chatOverlayOp}); pointer-events: ${v.chatOverlayPE}`)}>
   </div>
-  <section role="dialog" aria-label="Ask Infrasensor" style={css(`position: absolute; left: 6px; right: 6px; bottom: 6px; height: 660px; z-index: 41; box-sizing: border-box; background: var(--panel); border-radius: 32px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; transform: translateY(${v.chatPx}px); visibility: ${v.chatVis}`)}>
+  <section role="dialog" aria-label="Ask Raksha" style={css(`position: absolute; left: 6px; right: 6px; bottom: 6px; height: 660px; z-index: 41; box-sizing: border-box; background: var(--panel); border-radius: 32px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; transform: translateY(${v.chatPx}px); visibility: ${v.chatVis}`)}>
     <div className="ns-grab" onPointerDown={v.chatDown} onPointerMove={v.chatMove} onPointerUp={v.chatUp} onPointerCancel={v.chatUp} style={css("padding: 10px 16px 10px; flex-shrink: 0")}>
       <div style={css("width: 40px; height: 5px; border-radius: 999px; background: var(--line2); margin: 0 auto 12px")}>
       </div>
@@ -1584,7 +1584,7 @@ export default function renderTemplate(v) {
         </span>
         <span style={css("flex-grow: 1; display: flex; flex-direction: column")}>
           <span className="ns-serif" style={css("font-size: 21px; line-height: 23px; font-weight: 500")}>
-            Ask Infrasensor
+            Ask Raksha
           </span>
           <span style={css("font-size: 12px; color: var(--tx2)")}>
             Knows every sensor, ticket and technician on this site
@@ -1630,7 +1630,7 @@ export default function renderTemplate(v) {
           </div>
         </Fragment>))}
         {v.chatTyping ? (<>
-          <div role="status" aria-label="Infrasensor is typing" className="ns-pop" style={css("align-self: flex-start; padding: 12px 15px; border-radius: 20px 20px 20px 6px; background: var(--bg); display: flex; gap: 5px")}>
+          <div role="status" aria-label="Raksha is typing" className="ns-pop" style={css("align-self: flex-start; padding: 12px 15px; border-radius: 20px 20px 20px 6px; background: var(--bg); display: flex; gap: 5px")}>
             <span className="ns-dot" style={css("width: 7px; height: 7px; border-radius: 50%; background: var(--tx2)")}>
             </span>
             <span className="ns-dot" style={css("width: 7px; height: 7px; border-radius: 50%; background: var(--tx2); animation-delay: 150ms")}>
@@ -1948,7 +1948,7 @@ export default function renderTemplate(v) {
               </svg>
             </span>
             <span className="ns-serif" style={css("font-size: 21px; font-style: italic; font-weight: 500")}>
-              Infrasensor
+              Raksha
             </span>
             <span style={css("flex-grow: 1")}>
             </span>
@@ -1956,7 +1956,7 @@ export default function renderTemplate(v) {
               Skip
             </button>
           </header>
-          <div className="ns-grab" onPointerDown={v.introDown} onPointerUp={v.introUp} onPointerCancel={v.introUp} aria-roledescription="carousel" aria-label="What Infrasensor does" style={css("position: relative; flex-grow: 1; min-height: 0; overflow: hidden")}>
+          <div className="ns-grab" onPointerDown={v.introDown} onPointerUp={v.introUp} onPointerCancel={v.introUp} aria-roledescription="carousel" aria-label="What Raksha does" style={css("position: relative; flex-grow: 1; min-height: 0; overflow: hidden")}>
             <section className="ns-slide" aria-hidden={v.hid0} style={css(`position: absolute; inset: 0; padding: 10px 20px 0; transform: translateX(${v.sl0}%)`)}>
               <div className="ns-slideart" style={css(`height: 322px; border-radius: 46px 46px 120px 46px; background: var(--panel); position: relative; overflow: hidden; transform: ${v.art0}`)}>
                 <div style={css("position: absolute; inset: 22px 12px 8px")}>

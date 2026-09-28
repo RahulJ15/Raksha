@@ -71,7 +71,7 @@ def gemini_verdict(model: str, image: Image.Image, result: dict) -> dict:
     image.convert("RGB").save(buf, format="PNG")
     probs = ", ".join(f"{k}: {v:.1%}" for k, v in sorted(result["probs"].items(), key=lambda kv: -kv[1]))
     prompt = (
-        f"You are the diagnostics assistant in Infrasensor, a building-maintenance app. This spectrogram came from "
+        f"You are the diagnostics assistant in Raksha, a building-maintenance app. This spectrogram came from "
         f"{CONTEXT[model]}\n\nThe classifier predicted '{result['name']}' with {result['confidence']:.1%} confidence. "
         f"Full distribution: {probs}."
         + (" This is an early warning: the model leaned healthy but not confidently, so the most likely fault is "

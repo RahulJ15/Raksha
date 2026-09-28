@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 RENAMES = [
+    (r"\bInfrasensor\b", "Raksha"),  # product name (lowercase code paths/keys are left alone)
     (r"/\^RTU/", "/^Rooftop AC/"),
     (r"\bRTU-(\d)", r"Rooftop AC \1"),
     (r"/\^Riser/", "/^Water pipe/"),

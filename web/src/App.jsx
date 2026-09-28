@@ -33,7 +33,7 @@ export default function App() {
   if (!site) {
     return (
       <div className="boot">
-        {error ? <>Can't reach the Infrasensor API ({error}).<br />Start it with <code>uvicorn api.main:app --port 8000</code></> : 'Loading site…'}
+        {error ? <>Can't reach the Raksha API ({error}).<br />Start it with <code>uvicorn api.main:app --port 8000</code></> : 'Loading site…'}
       </div>
     );
   }

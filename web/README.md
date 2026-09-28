@@ -1,4 +1,4 @@
-# Infrasensor UI
+# Raksha UI
 
 React/Vite port of the Claude Design prototype (`~/Downloads/infrasensor/source/Main.dc.html`),
 wired to the FastAPI backend in `../api`.
