@@ -18,12 +18,25 @@ html, body { overscroll-behavior: none; }
   .stage { display: block; }
   .stage > div { width: 100vw !important; height: 100vh !important; border-radius: 0 !important; box-shadow: none !important; }
   .stage main { max-width: 1180px; margin: 0 auto; }
-  .ns-mapview { display: flex; justify-content: center; }
-  .ns-mapview > .ns-maplayer { position: relative !important; flex: none; zoom: 1.25; }
+  /* Map screen: floor plan on the left, info panel (open list, selected sensor, directions) on the right. */
+  .ns-mapview { display: grid; grid-template-columns: minmax(0, 1fr) min(420px, 38%); grid-template-rows: minmax(0, 1fr); }
+  /* The whole floor plan fits on desktop, so the phone's pan-and-zoom onto the selected sensor is turned off:
+     the route and the moving "you are here" marker are drawn on the full plan instead. */
+  .ns-mapview > .ns-maplayer { position: relative !important; grid-column: 1; grid-row: 1; justify-self: center; align-self: center; zoom: 1.1; transform: none !important; }
+  .ns-mapview > div[aria-hidden="true"] { right: calc(min(420px, 38%) + 16px) !important; }  /* compass stays on the map */
+  .ns-mapview > [role="status"] { right: calc(min(420px, 38%) + 16px) !important; }         /* walking banner */
+  .ns-mapview:has(> [role="status"]) > .ns-maplayer { margin-top: 56px; }                    /* keep the plan below it */
+  .ns-mapview > .ns-sheet {
+    position: relative !important; grid-column: 2; grid-row: 1; left: auto !important; right: auto !important; bottom: auto !important;
+    transform: none !important; margin: 12px 12px 12px 0; box-sizing: border-box; overflow-y: auto; border-radius: 24px !important;
+    padding-top: 14px !important;
+  }
+  .ns-mapview > .ns-sheet > .ns-grab { display: none !important; }  /* always open on desktop, nothing to drag */
   .ns-onb > * { width: 100%; max-width: 620px; margin-left: auto; margin-right: auto; }
   .ns-scan-overlay { justify-content: center !important; align-items: center; }
   .ns-scan-sheet { width: min(620px, 92vw); max-height: 88vh !important; border-radius: 28px !important; }
 }
-@media (min-width: 900px) and (min-height: 1050px) {
-  .ns-mapview > .ns-maplayer { zoom: 1.6; }
-}
+/* Floor plan grows with the window height (424 px tall before zoom). */
+@media (min-width: 900px) and (min-height: 760px) { .ns-mapview > .ns-maplayer { zoom: 1.35; } }
+@media (min-width: 900px) and (min-height: 880px) { .ns-mapview > .ns-maplayer { zoom: 1.6; } }
+@media (min-width: 900px) and (min-height: 1050px) { .ns-mapview > .ns-maplayer { zoom: 1.9; } }
