@@ -1,0 +1,38 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Datasets and generated data (GBs; re-download with wallsense/fetch_real_audio.py etc.)
+wallsense/data/external/
+wallsense/data/raw_audio/
+wallsense/data/raw_multichannel/
+wallsense/data/features_fusion/
+wallsense/data/spectrograms/
+
+# Trained models (up to 90 MB each; retrain with wallsense/train_*.py)
+wallsense/checkpoints/
+*.pt
+*.joblib
+
+# Logs
+*.log
+
+# Copied third-party bearing project (own git history, no licence file); credit in README
+vibro-acoustic-bearing-fault-diagnosis/
+
+# Web
+web/node_modules/
+web/dist/
+web/dist-demo/
+
+# OS / editor
+.DS_Store
+.claude/
+
+# Raw MaFaulDa excerpts (licence unconfirmed); regenerate with wallsense/make_test_captures.py
+test_scans/machine/*.csv

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+checkpoints/
+data/spectrograms/
+data/sensor_timeseries/
+data/*.csv

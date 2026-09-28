@@ -1,0 +1,22 @@
+body { margin: 0; min-height: 100vh; background: #d9e3c8; font-family: 'Manrope', system-ui, sans-serif; }
+.stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.stage > div { box-shadow: 0 30px 60px -30px rgba(21, 48, 47, .5); border-radius: 28px; }
+@media (max-width: 420px) { .stage { display: block; } .stage > div { border-radius: 0; box-shadow: none; } }
+.boot { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; color: #15302F; line-height: 1.6; padding: 16px; }
+
+/* Desktop: the app fills the window instead of sitting in a phone frame. The layout is the mobile design,
+   widened: content gets a comfortable max width, the floor plan is centred and enlarged, onboarding is a
+   centred column and the scan panel becomes a dialog. */
+@media (min-width: 900px) {
+  .stage { display: block; }
+  .stage > div { width: 100vw !important; height: 100vh !important; border-radius: 0 !important; box-shadow: none !important; }
+  .stage main { max-width: 1180px; margin: 0 auto; }
+  .ns-mapview { display: flex; justify-content: center; }
+  .ns-mapview > .ns-maplayer { position: relative !important; flex: none; zoom: 1.25; }
+  .ns-onb > * { width: 100%; max-width: 620px; margin-left: auto; margin-right: auto; }
+  .ns-scan-overlay { justify-content: center !important; align-items: center; }
+  .ns-scan-sheet { width: min(620px, 92vw); max-height: 88vh !important; border-radius: 28px !important; }
+}
+@media (min-width: 900px) and (min-height: 1050px) {
+  .ns-mapview > .ns-maplayer { zoom: 1.6; }
+}

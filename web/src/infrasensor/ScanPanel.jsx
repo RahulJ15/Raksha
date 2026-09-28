@@ -1,0 +1,448 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import InfoCard, { InfoIcon } from './InfoCard';
+import { RESULTS, resultKey } from './glossary';
+import * as api from '../api';
+
+export const TYPE_LABEL = { machine: 'Sound + vibration', sound: 'Microphone', bearing: 'Vibration spectrogram', thermal: 'Thermal camera',
+  crack: 'Crack photo', strain_live: 'Strain gauge', crack_live: 'Crack gauge',
+  vibration_live: 'Vibration sensor', thermal_live: 'Thermal sensor', pressure_live: 'Pressure sensor', acoustic_live: 'Acoustic sensor' };
+const TYPE_OPTIONS = [['sound', 'Sound spectrogram'], ['bearing', 'Vibration spectrogram'], ['thermal', 'Thermal image'], ['crack', 'Concrete photo'], ['machine', 'Sensor capture (CSV)']];
+const ACCEPT = 'image/*,.bmp,.csv,.npz';
+
+// Model confidence is not accuracy, and softmax saturates: never show a flat "100%".
+export const fmtPct = (p) => (p >= 0.995 ? '>99%' : p > 0 && p < 0.005 ? '<1%' : `${Math.round(p * 100)}%`);
+const confWord = (p) => (p >= 0.95 ? 'Very confident' : p >= 0.8 ? 'Confident' : p >= 0.6 ? 'Fairly sure' : 'Unsure');
+
+const pretty = (s) => s.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+const isImage = (f) => !/\.(csv|npz)$/i.test(f.name);
+
+// One drop zone for every sensor type. Each file's type is detected on the server (and can be overridden);
+// several files from one machine are combined into a single per-asset decision.
+export default function ScanPanel({ onClose }) {
+  const [files, setFiles] = useState([]);
+  const [overrides, setOverrides] = useState([]);
+  const [scan, setScan] = useState(null);
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [drag, setDrag] = useState(false);
+  const [machine, setMachine] = useState('');
+  const [machines, setMachines] = useState([]);
+  const input = useRef(null);
+
+  const [samples, setSamples] = useState([]);
+  useEffect(() => { api.getAssets().then(setMachines).catch(() => {}); api.getSamples().then(setSamples).catch(() => {}); }, []);
+
+  const thumbs = useMemo(() => files.map((f) => (isImage(f) ? URL.createObjectURL(f) : null)), [files]);
+  useEffect(() => () => thumbs.forEach((u) => u && URL.revokeObjectURL(u)), [thumbs]);
+
+  useEffect(() => {
+    if (!files.length) { setScan(null); return undefined; }
+    let alive = true;
+    setBusy(true); setError(null);
+    api.scan(files, overrides, machine)
+      .then((d) => alive && setScan(d))
+      .catch((e) => alive && setError(e.message))
+      .finally(() => alive && setBusy(false));
+    return () => { alive = false; };
+  }, [files, overrides, machine]);
+
+  const add = (list) => {
+    const incoming = [...list].filter(Boolean);
+    if (!incoming.length) return;
+    setFiles((f) => [...f, ...incoming].slice(0, 6));
+    setOverrides((o) => [...o, ...incoming.map(() => null)].slice(0, 6));
+  };
+  const remove = (i) => { setFiles((f) => f.filter((_, j) => j !== i)); setOverrides((o) => o.filter((_, j) => j !== i)); };
+  const setType = (i, t) => setOverrides((o) => o.map((x, j) => (j === i ? t || null : x)));
+  const items = scan?.items || [];
+  const multi = files.length > 1;
+
+  return (
+    <div className="ns-scan-overlay" style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(8, 20, 20, .38)' }} />
+      <section role="dialog" aria-label="Upload a scan" className="ns-scan-sheet" style={{ position: 'relative', maxHeight: '88%', overflowY: 'auto', background: 'var(--panel)', borderRadius: '28px 28px 0 0', boxShadow: 'var(--shadow)', padding: '18px 18px 22px', animation: 'ns-rise 360ms cubic-bezier(.3,1.3,.5,1) both' }}>
+        <header style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+          <div style={{ flexGrow: 1 }}>
+            <h2 className="ns-serif" style={{ margin: 0, fontSize: 26, lineHeight: '30px', fontWeight: 500 }}>Scan a machine</h2>
+            <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: '18px', color: 'var(--tx2)' }}>
+              Add any sensor files from one machine. We work out what each one is and combine them.
+            </p>
+            {api.DEMO && (
+              <p style={{ margin: '8px 0 0', padding: '6px 10px', borderRadius: 10, background: 'var(--panel2)', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>
+                <strong style={{ color: 'var(--tx)' }}>Demo version.</strong> Results for the sample files were produced by our trained models ahead of time; the combining rules run live.
+              </p>
+            )}
+          </div>
+          <button className="ns-btn ns-gh" aria-label="Close" onClick={onClose} style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path className="ns-ic" d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, fontSize: 13, fontWeight: 600 }}>
+          <span style={{ flexShrink: 0 }}>Which machine?</span>
+          <select value={machine} onChange={(e) => setMachine(e.target.value)}
+            style={{ flexGrow: 1, minWidth: 0, font: 'inherit', fontSize: 13, fontWeight: 500, padding: '8px 10px', borderRadius: 999, border: '1.5px solid var(--line2)', background: 'var(--bg)', color: 'var(--tx)' }}>
+            <option value="">Not linked (files only)</option>
+            {machines.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+        </label>
+        {machine && !files.length && (
+          <p style={{ margin: '0 2px 12px', fontSize: 13, lineHeight: '18px', color: 'var(--tx2)' }}>
+            Its live sensors will be compared with whatever you upload.
+          </p>
+        )}
+        <button className="ns-btn" onClick={() => input.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
+          onDrop={(e) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}
+          style={{ width: '100%', boxSizing: 'border-box', minHeight: files.length ? 64 : 132, borderRadius: 20, border: `2px dashed ${drag ? 'var(--acc)' : 'var(--line2)'}`, background: drag ? 'var(--panel2)' : 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+          <span style={{ textAlign: 'center', fontSize: 14, color: 'var(--tx2)', lineHeight: '20px' }}>
+            {!files.length && <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style={{ display: 'block', margin: '0 auto 6px', color: 'var(--acc)' }}><path className="ns-ic" d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 14.5v4a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-4" /></svg>}
+            <strong style={{ color: 'var(--tx)' }}>{files.length ? '+ Add another file from this machine' : 'Choose or drop sensor files'}</strong>
+            {!files.length && <><br />Spectrograms, thermal images, concrete photos or sensor CSVs. Several at once is fine.</>}
+          </span>
+        </button>
+        <input ref={input} type="file" accept={ACCEPT} multiple hidden onChange={(e) => { add(e.target.files); e.target.value = ''; }} />
+
+        {api.DEMO && <SampleGallery samples={samples} onPick={add} />}
+
+        {busy && <p style={{ margin: '14px 2px 0', fontSize: 14, color: 'var(--tx2)' }}>Detecting file types and running the models…</p>}
+        {error && <p role="alert" style={{ margin: '14px 2px 0', fontSize: 14, color: 'var(--crit)' }}>{error}</p>}
+
+        {scan?.asset && !busy && <AssetCard asset={scan.asset} items={items} live={scan.live || []} machine={scan.machine} />}
+
+        {files.map((f, i) => (
+          <ItemCard key={`${f.name}:${f.size}:${f.lastModified}`} file={f} thumb={thumbs[i]} item={items[i]} busy={busy}
+            override={overrides[i]} onType={(t) => setType(i, t)} onRemove={() => remove(i)} startOpen={!multi} />
+        ))}
+        {files.length > 0 && (
+          <button className="ns-btn" onClick={() => { setFiles([]); setOverrides([]); }} style={{ marginTop: 12, fontSize: 13, color: 'var(--tx2)', textDecoration: 'underline' }}>Clear all files</button>
+        )}
+      </section>
+    </div>
+  );
+}
+
+const verdictCache = new Map();
+
+// One uploaded file: what we detected it as, the model result, explanations and the Gemini verdict.
+function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOpen }) {
+  const [open, setOpen] = useState(startOpen);
+  const [infoFor, setInfoFor] = useState(null);
+  const [verdict, setVerdict] = useState(null);
+  const [verdictErr, setVerdictErr] = useState(null);
+  const [verdictBusy, setVerdictBusy] = useState(false);
+  useEffect(() => setOpen(startOpen), [startOpen]);
+
+  const result = item?.result;
+  const type = item?.type;
+  const hasResult = Boolean(result);
+  useEffect(() => {
+    if (!hasResult || !type) return undefined;
+    let alive = true;
+    setVerdictBusy(true); setVerdictErr(null); setVerdict(null);
+    // Cached per file + type, so re-scanning after adding another file doesn't ask Gemini again.
+    const key = `${file.name}:${file.size}:${file.lastModified}:${type}`;
+    if (!verdictCache.has(key)) verdictCache.set(key, api.verdict(type, file));
+    verdictCache.get(key)
+      .then((d) => alive && setVerdict(d))
+      .catch((e) => { verdictCache.delete(key); if (alive) setVerdictErr(e.message); })
+      .finally(() => alive && setVerdictBusy(false));
+    return () => { alive = false; };
+  }, [hasResult, type, file]);
+
+  const det = item?.detected;
+  const unknownForced = det && !det.auto && det.type == null && !/\.(csv|npz)$/i.test(file.name);
+  const explain = (label) => type && RESULTS[type]?.[resultKey(label)];
+  const probs = result ? Object.entries(result.probs).sort((a, b) => b[1] - a[1]) : [];
+  const tone = result ? (result.early_warning ? 'var(--watch)' : result.fault ? 'var(--crit)' : 'var(--ok)') : 'var(--tx)';
+  const status = result && (result.early_warning ? 'Early warning' : result.fault ? 'Fault detected' : 'Looks healthy');
+  const img = (type === 'crack' && result?.preview) || thumb || result?.preview;
+
+  return (
+    <div style={{ marginTop: 14, borderRadius: 20, border: '1.5px solid var(--line)', background: 'var(--panel)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10 }}>
+        {img ? <img src={img} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
+          : <span style={{ width: 56, height: 56, borderRadius: 10, background: 'var(--panel2)', flexShrink: 0 }} />}
+        <button className="ns-btn" onClick={() => result && setOpen(!open)} aria-expanded={open} style={{ flexGrow: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+          {result && (
+            <span style={{ display: 'block', fontSize: 14, color: tone, fontWeight: 600 }}>
+              {pretty(result.name)} <span className="ns-num" style={{ color: 'var(--tx2)', fontWeight: 500 }}>· {fmtPct(result.confidence)}</span>
+            </span>
+          )}
+          {!result && busy && <span style={{ fontSize: 12, color: 'var(--tx2)' }}>Working…</span>}
+        </button>
+        <button className="ns-btn" aria-label={`Remove ${file.name}`} onClick={onRemove} style={{ color: 'var(--tx2)', padding: 6, display: 'flex' }}>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path className="ns-ic" d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px 10px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 12, color: 'var(--tx2)' }}>
+          {det ? (det.auto ? (det.type || det.type === undefined ? `Detected: ${det.how}` : 'Not recognised') : 'Type chosen by you') : 'Detecting…'}
+          {det?.auto && det.type && det.type !== 'machine' ? ` · ${fmtPct(det.confidence)}` : ''}
+        </span>
+        <select aria-label="File type" value={override || ''} onChange={(e) => onType(e.target.value)}
+          style={{ marginLeft: 'auto', font: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 999, border: '1.5px solid var(--line2)', background: 'var(--bg)', color: 'var(--tx)' }}>
+          <option value="">Auto-detect</option>
+          {TYPE_OPTIONS.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
+        </select>
+      </div>
+      {item?.error && <p role="alert" style={{ margin: '0 10px 10px', fontSize: 13, lineHeight: '18px', color: 'var(--crit)' }}>{item.error}</p>}
+      {unknownForced && result && (
+        <p style={{ margin: '0 10px 10px', fontSize: 13, lineHeight: '18px', color: 'var(--watch)' }}>
+          This file didn't look like a {TYPE_LABEL[type].toLowerCase()} image, so this result may be meaningless even if it looks confident.
+        </p>
+      )}
+
+      {result && open && (
+        <div style={{ padding: '4px 12px 14px', borderTop: '1px solid var(--line)', animation: 'ns-enter 280ms ease both' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: tone }}>{status}</span>
+            <span className="ns-num" style={{ fontSize: 13, color: 'var(--tx2)' }}>{TYPE_LABEL[type]} model</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '2px 0 12px' }}>
+            <span className="ns-serif" style={{ fontSize: 28, lineHeight: '34px', fontWeight: 500, flexGrow: 1 }}>{pretty(result.name)}</span>
+            <span style={{ textAlign: 'right' }}>
+              <span className="ns-num" style={{ display: 'block', fontSize: 28, fontWeight: 700, color: tone }}>{fmtPct(result.confidence)}</span>
+              <span style={{ fontSize: 11, color: 'var(--tx2)' }}>{confWord(result.confidence)}</span>
+            </span>
+          </div>
+          {result.early_warning && (
+            <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: '18px', color: 'var(--tx2)' }}>
+              The model leans healthy ({fmtPct(result.probs.healthy)}) but not confidently enough to clear it, so this is flagged early. Worth a check on the next visit.
+            </p>
+          )}
+          {result.sensors && <SensorBreakdown result={result} />}
+          {type === 'crack' && result.preview && (
+            <figure style={{ margin: '0 0 12px' }}>
+              <img src={result.preview} alt="Photo with cracked areas outlined in red" style={{ width: '100%', borderRadius: 14, display: 'block' }} />
+              <figcaption style={{ fontSize: 12, color: 'var(--tx2)', marginTop: 4 }}>
+                {result.tiles > 1 ? `Checked in ${result.tiles} tiles; ${result.cracked_tiles} look cracked (red boxes).` : 'Checked as a single close-up.'}
+              </figcaption>
+            </figure>
+          )}
+          <div style={{ marginBottom: 14 }}>
+            <InfoCard key={`${type}:${result.name}`} entry={explain(result.name)} open label="What does this mean?" />
+          </div>
+          <ReliabilityCard model={type} />
+          {probs.map(([label, p]) => (
+            <div key={label} style={{ display: 'grid', gridTemplateColumns: '1fr 44px', alignItems: 'center', gap: '4px 10px', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--tx2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {pretty(label)}
+                {explain(label) && (
+                  <button className="ns-btn" aria-label={`What is ${pretty(label).toLowerCase()}?`} aria-expanded={infoFor === label}
+                    onClick={() => setInfoFor(infoFor === label ? null : label)} style={{ display: 'flex', color: infoFor === label ? 'var(--acc)' : 'var(--tx2)' }}>
+                    <InfoIcon size={15} />
+                  </button>
+                )}
+              </span>
+              <span className="ns-num" style={{ fontSize: 13, textAlign: 'right' }}>{fmtPct(p)}</span>
+              <span style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'var(--panel2)', overflow: 'hidden' }}>
+                <span style={{ display: 'block', height: '100%', width: `${p * 100}%`, borderRadius: 3, background: label === result.label || pretty(label) === pretty(result.name) ? tone : 'var(--line2)', transition: 'width 500ms cubic-bezier(.3,1.2,.5,1)' }} />
+              </span>
+              {infoFor === label && (
+                <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
+                  <InfoCard key={label} entry={explain(label)} open />
+                </div>
+              )}
+            </div>
+          ))}
+          <VerdictCard verdict={verdict} busy={verdictBusy} error={verdictErr} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const AGREE = {
+  agree: { text: 'Agrees with the model', color: 'var(--ok)' },
+  disagree: { text: 'Disagrees with the model', color: 'var(--crit)' },
+  unsure: { text: 'Not sure', color: 'var(--watch)' },
+};
+
+function VerdictCard({ verdict, busy, error }) {
+  const label = { fontSize: 12, fontWeight: 700, color: 'var(--tx2)', margin: '12px 0 3px' };
+  return (
+    <div style={{ marginTop: 18, padding: 16, borderRadius: 20, background: 'var(--bg)', border: '1.5px solid var(--line)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style={{ color: 'var(--acc)' }}><path className="ns-ic" d="M12 3.5c.6 4.4 4.1 7.9 8.5 8.5-4.4.6-7.9 4.1-8.5 8.5-.6-4.4-4.1-7.9-8.5-8.5 4.4-.6 7.9-4.1 8.5-8.5z" /></svg>
+        <span style={{ fontSize: 14, fontWeight: 700, flexGrow: 1 }}>Gemini verdict</span>
+        {verdict && <span style={{ fontSize: 12, fontWeight: 700, color: (AGREE[verdict.agrees] || AGREE.unsure).color }}>{(AGREE[verdict.agrees] || AGREE.unsure).text}</span>}
+      </div>
+      {busy && (
+        <div aria-label="Gemini is thinking" style={{ display: 'flex', gap: 5, padding: '6px 0' }}>
+          {[0, 1, 2].map((i) => <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc)', animation: `ns-dotp 1s ${i * 0.15}s infinite` }} />)}
+        </div>
+      )}
+      {error && !busy && <p style={{ margin: 0, fontSize: 13, lineHeight: '19px', color: 'var(--tx2)' }}>{error}</p>}
+      {verdict && !busy && (
+        <div style={{ animation: 'ns-enter 320ms ease both' }}>
+          <p className="ns-serif" style={{ margin: '0 0 6px', fontSize: 20, lineHeight: '25px', fontWeight: 500 }}>{verdict.headline}</p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: '20px' }}>{verdict.explanation}</p>
+          <p style={label}>Likely cause</p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: '20px' }}>{verdict.likely_cause}</p>
+          <p style={label}>If ignored</p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: '20px' }}>{verdict.risk}</p>
+          <div style={{ display: 'flex', gap: 8, margin: '12px 0 4px' }}>
+            {[['How urgent', verdict.urgency], ['Who can fix it', verdict.who]].map(([k, val]) => (
+              <div key={k} style={{ flex: 1, padding: '8px 10px', borderRadius: 12, background: 'var(--panel2)' }}>
+                <div style={{ fontSize: 11, color: 'var(--tx2)' }}>{k}</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <p style={label}>What to do</p>
+          <ol style={{ margin: 0, paddingLeft: 20, fontSize: 14, lineHeight: '20px' }}>
+            {verdict.next_steps.map((step, i) => <li key={i} style={{ marginBottom: 3 }}>{step}</li>)}
+          </ol>
+          <p style={{ margin: '10px 0 0', fontSize: 11, color: 'var(--tx2)' }}>Generated by {verdict.model}. Check on site before acting.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// What each sensor concluded on its own, next to the combined verdict.
+function SensorBreakdown({ result }) {
+  const rows = [...Object.values(result.sensors), { sensor: 'Combined', ...result }];
+  const agree = Object.values(result.sensors).every((r) => r.label === result.label);
+  return (
+    <div style={{ margin: '0 0 12px', padding: '10px 12px', borderRadius: 16, border: '1.5px solid var(--line)' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx2)', marginBottom: 6 }}>What each sensor concluded</div>
+      {rows.map((r) => (
+        <div key={r.sensor} style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '4px 0', fontWeight: r.sensor === 'Combined' ? 700 : 400, borderTop: r.sensor === 'Combined' ? '1px solid var(--line)' : 'none' }}>
+          <span style={{ width: 128, flexShrink: 0, fontSize: 13, color: r.sensor === 'Combined' ? 'var(--tx)' : 'var(--tx2)' }}>{r.sensor}</span>
+          <span style={{ flexGrow: 1, fontSize: 14, color: r.fault ? 'var(--crit)' : 'var(--ok)' }}>{pretty(r.name)}</span>
+          <span className="ns-num" style={{ fontSize: 13 }}>{fmtPct(r.confidence)}</span>
+        </div>
+      ))}
+      <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>
+        {agree ? 'Both sensors agree, so this is a strong signal.' : 'The sensors disagree. The combined model weighs both; confirm on site before sending anyone.'}
+        {' '}Averaged over {result.windows} one-second windows.
+      </p>
+    </div>
+  );
+}
+
+const DECISION_TONE = { healthy: 'var(--ok)', monitor: 'var(--tx2)', inspect: 'var(--watch)', confirmed: 'var(--crit)' };
+
+// Per-asset agreement: a ticket only when two independent sensor types both see a problem.
+function AssetCard({ asset, items, live, machine }) {
+  const tone = DECISION_TONE[asset.decision];
+  const rows = items.filter((it) => it.result);
+  return (
+    <div style={{ margin: '14px 0 4px', padding: 14, borderRadius: 18, border: `2px solid ${tone}`, animation: 'ns-enter 300ms ease both' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: tone }}>{machine || 'This machine'} overall</div>
+      <div className="ns-serif" style={{ fontSize: 21, lineHeight: '26px', fontWeight: 500, margin: '2px 0 8px' }}>{asset.title}</div>
+      {rows.map((it, i) => (
+        <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, padding: '2px 0' }}>
+          <span style={{ width: 128, flexShrink: 0, color: 'var(--tx2)' }}>{TYPE_LABEL[it.type]}</span>
+          <span style={{ flexGrow: 1, color: it.result.fault ? 'var(--crit)' : 'var(--ok)' }}>{pretty(it.result.name)}</span>
+          <span className="ns-num">{fmtPct(it.result.confidence)}</span>
+        </div>
+      ))}
+      {live.length > 0 && (
+        <div style={{ margin: '6px 0 0', paddingTop: 6, borderTop: '1px solid var(--line)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)', marginBottom: 2 }}>Live sensors on this machine</div>
+          {live.map((l) => {
+            const agrees = rows.length > 0 && rows.some((it) => it.result.fault) === l.result.fault;
+            return (
+              <div key={l.sensor} style={{ display: 'flex', gap: 8, fontSize: 13, padding: '2px 0', alignItems: 'baseline' }}>
+                <span style={{ width: 128, flexShrink: 0, color: 'var(--tx2)' }}>{TYPE_LABEL[l.type]} <span className="ns-num">{l.sensor}</span></span>
+                <span style={{ flexGrow: 1, color: l.result.fault ? 'var(--crit)' : 'var(--ok)' }}>
+                  {pretty(l.result.name)}
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--tx2)' }}>
+                    {l.reading}{rows.length > 0 && <> · {agrees ? 'agrees with your upload' : 'disagrees with your upload'}</>}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: '20px', fontWeight: 600 }}>{asset.action}</p>
+      <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: '18px', color: 'var(--tx2)' }}>{asset.reason}</p>
+    </div>
+  );
+}
+
+let cardsPromise = null;
+// How well the model does on data it never saw, including the hard tests. Shown so nobody mistakes confidence for accuracy.
+function ReliabilityCard({ model }) {
+  const [cards, setCards] = useState(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    cardsPromise = cardsPromise || api.getModels().catch(() => null);
+    cardsPromise.then(setCards);
+  }, []);
+  const c = cards?.[model];
+  if (!c) return null;
+  return (
+    <div style={{ marginBottom: 14, borderRadius: 16, border: '1.5px solid var(--line)' }}>
+      <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', fontSize: 13, fontWeight: 700 }}>
+        <span style={{ flexGrow: 1 }}>How reliable is this model?</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 220ms' }}><path className="ns-ic" d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0 12px 12px', fontSize: 13, lineHeight: '19px' }}>
+          <p style={{ margin: '0 0 8px', color: 'var(--tx2)' }}>{c.data}</p>
+          {c.tests.filter(([, v]) => v != null).map(([name, [acc, correct, total]]) => (
+            <div key={name} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '3px 0', borderTop: '1px solid var(--line)' }}>
+              <span>{name}</span>
+              <span className="ns-num" style={{ textAlign: 'right' }}><strong>{correct.toLocaleString()} of {total.toLocaleString()}</strong> right ({Math.round(acc * 100)}%)</span>
+            </div>
+          ))}
+          <p style={{ margin: '8px 0 0', color: 'var(--tx2)' }}>{c.caveat}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const GROUPS = [['machine', 'Sound + vibration captures'], ['thermal', 'Thermal images'], ['crack', 'Concrete photos'], ['sound', 'Sound spectrograms'], ['bearing', 'Vibration spectrograms']];
+
+// Demo build only: one-click sample files (the static demo has results for exactly these).
+function SampleGallery({ samples, onPick }) {
+  const [open, setOpen] = useState(true);
+  if (!samples.length) return null;
+  const pick = async (s) => {
+    const blob = s.file ? await fetch(`/demo/${s.file}`).then((r) => r.blob()) : new Blob([], { type: 'text/csv' });
+    onPick([new File([blob], s.name, { type: blob.type })]);
+  };
+  const label = (s) => s.name.replace(/\.(png|jpe?g|bmp|csv)$/i, '').replace(/__heldout(_2)?/, '').replace(/__/g, ' · ').replace(/_/g, ' ');
+  return (
+    <div style={{ marginTop: 12, borderRadius: 18, border: '1.5px solid var(--line)' }}>
+      <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', padding: '10px 12px', fontSize: 13, fontWeight: 700 }}>
+        <span style={{ flexGrow: 1 }}>Try a sample</span><span style={{ color: 'var(--tx2)', fontWeight: 500 }}>{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open && (
+        <div style={{ padding: '0 12px 12px' }}>
+          {GROUPS.map(([folder, title]) => {
+            const list = samples.filter((s) => s.folder === folder);
+            if (!list.length) return null;
+            return (
+              <div key={folder} style={{ marginTop: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)', margin: '4px 0' }}>{title}</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {list.map((s) => (
+                    <button key={s.name} className="ns-btn ns-gh" onClick={() => pick(s)} title={s.name}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px 4px 4px', borderRadius: 999, fontSize: 12 }}>
+                      {s.file ? <img src={`/demo/${s.file}`} alt="" style={{ width: 24, height: 24, borderRadius: 999, objectFit: 'cover' }} />
+                        : <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--panel2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>CSV</span>}
+                      {label(s)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          <p style={{ margin: '8px 0 0', fontSize: 11, lineHeight: '16px', color: 'var(--tx2)' }}>
+            Samples come from recordings the models never trained on. Pick several, or choose a machine above, to see the sensors agree or disagree.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
