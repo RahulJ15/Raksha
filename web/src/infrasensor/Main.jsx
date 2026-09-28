@@ -29,7 +29,7 @@ export default class Main extends Component {
       chatMsgs: [{ from: 'bot', text: 'Hi. I can see every sensor, ticket and technician at Northside Annex. Ask me something like "What is wrong with Roof vent 6?" or "Who should fix Rooftop AC 2?"' }],
       bpStage: 'camera', bpEdges: false, bpP: 0, pinP: 0, yaw: 28, pitch: 56, ucard: 0, sheetMin: false, navDir: 1, chatCtx: { sensor: null, tech: null },
       introIdx: 0, introTouched: false, authMode: 'signup', authName: '', authEmail: '', authPass: '', diagStep: 0, diagDir: 1, diagFlip: false,
-      dg: { watch: [], where: [], floors: 4, area: null, speed: null, respond: [], teamSize: 3, control: [], trouble: [] }, kit: null,
+      dg: { watch: ['water', 'pipes', 'equip', 'heat', 'structure', 'air'], where: ['roof', 'mech', 'walls', 'elec', 'floors', 'grounds'], floors: 4, area: null, speed: null, respond: [], teamSize: 3, control: [], trouble: [] }, kit: null,
       siteCode: 'NSA-4827', devOff: {}, devRate: {}, devId: 'RH-V6', devOpen: false, devY: 1, devCheck: 0, devCheckId: null,
       pairOpen: false, pairY: 1, pairStage: 'enter', pairCode: '', pairP: 0, pairDevId: '', justPaired: null, kitDismissed: false, onboarded: false
     });
@@ -79,7 +79,7 @@ export default class Main extends Component {
       s.levelName = LV[s.level].name;
     });
     const CAT = {
-      water: { name: 'Water', covers: 'Roof vents, drains, pipe risers, hydrants and valve pits', icon: SI.humidity },
+      water: { name: 'Water', covers: 'Roof vents, drains, pipe pipes, hydrants and valve pits', icon: SI.humidity },
       elec: { name: 'Electrical & fire', covers: 'Electrical panels and the fire sprinkler system', icon: 'M13 3 5 14h6l-1 7 8-11h-6z' },
       mech: { name: 'Mechanical', covers: 'HVAC units, boilers, pumps and elevators', icon: 'M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1' },
       struct: { name: 'Structural', covers: 'Piers, walls, parapets and cracks', icon: 'M3 20h18M5 20V10M19 20V10M3 10l9-6 9 6M9.5 20v-6h5v6' }
@@ -186,7 +186,7 @@ export default class Main extends Component {
     if (st === 'auth') { this.go('auth', { authMode: 'signup' }); return; }
     if (st === 'diag') { this.go('diag', { diagStep: 0 }); return; }
     if (st === 'diag3') { this.go('diag', { diagStep: 0, dg: Object.assign({}, SAMPLE, { watch: ['water', 'pipes'] }) }); return; }
-    if (st === 'kit') { this.go('diag', { diagStep: 7, dg: SAMPLE, kit: this.computeKit(SAMPLE) }); return; }
+    if (st === 'kit') { this.go('diag', { diagStep: this.diagDef().steps.length, dg: SAMPLE, kit: this.computeKit(SAMPLE) }); return; }
     if (st === 'kitdash') { this.setState({ kit: this.computeKit(SAMPLE), onboarded: true }); this.go('overview'); return; }
     if (st === 'map') this.go('map', { level: 'roof' });
     else if (st === 'selected') this.go('map', { level: 'roof', selId: 'RH-V6' });
@@ -905,7 +905,7 @@ export default class Main extends Component {
       roof: 'M3 10h18M5 10v9h14v-9M3 10l2-3h14l2 3',
       fan: 'M4 4h16v16H4zM12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0M12 7v10M7 12h10',
       boiler: 'M7 4h10v16H7zM10 8h4M12 11v6M10 15h4',
-      risers: 'M8 3v18M16 3v18M8 8h8M8 16h8',
+      pipes: 'M8 3v18M16 3v18M8 8h8M8 16h8',
       layers: 'M4 7.5 12 3.5l8 4-8 4zM4 12l8 4 8-4M4 16.5l8 4 8-4',
       parking: 'M6 20V4h7a4.5 4.5 0 0 1 0 9H6',
       clock: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
@@ -928,14 +928,10 @@ export default class Main extends Component {
     };
     const O = (v, label, sub, icon) => ({ v, label, sub, icon });
     const steps = [
-      { key: 'watch', kind: 'multi', kicker: 'Focus', q: 'What should your sensors watch for?', help: 'Pick every job you want covered. We only suggest sensors for the jobs you choose.', opts: [
-        O('water', 'Water getting in', 'Roof, vents, low spots', I.drop), O('pipes', 'Leaks and pressure loss', 'Supply lines and risers', I.pipe),
+      { key: 'watch', kind: 'multi', info: true, kicker: 'What it does', q: 'Here is what Raksha watches for', help: 'All of these are covered automatically, across the whole site. Nothing to choose, just continue.', opts: [
+        O('water', 'Water getting in', 'Roof, vents, low spots', I.drop), O('pipes', 'Leaks and pressure loss', 'Supply lines and pipes', I.pipe),
         O('equip', 'Equipment wearing out', 'HVAC, pumps, elevators', I.fan), O('heat', 'Heat and fire risk', 'Hot panels, sprinklers', I.bolt),
         O('structure', 'Structure moving', 'Cracks, settling, load', I.crack), O('air', 'Air and comfort', 'Room temperature, damp', I.air)] },
-      { key: 'where', kind: 'multi', kicker: 'Coverage', q: 'Where should they watch?', help: 'Choose the parts of the site you want covered. Skip anything that does not apply.', opts: [
-        O('roof', 'Roof and rooftop units', 'Membrane, vents, drains', I.roof), O('mech', 'Mechanical rooms', 'Boilers, pumps, chillers', I.boiler),
-        O('walls', 'Inside walls', 'Pipe and drain risers', I.risers), O('elec', 'Electrical rooms', 'Panels and switchgear', I.bolt),
-        O('floors', 'Every floor', 'Corridors, units, ceilings', I.layers), O('grounds', 'Parking and grounds', 'Decks, ramps, supports', I.parking)] },
       { key: 'size', kind: 'size', kicker: 'Coverage area', q: 'How much space should they cover?', help: 'Rough numbers are fine. This sets how many sensors each area needs.' },
       { key: 'speed', kind: 'single', kicker: 'Timing', q: 'How fast do you need to know?', help: 'Faster alerts use a little more battery. You can change this for each sensor later.', opts: [
         O('now', 'The moment it happens', 'Live readings, instant alerts', I.bolt), O('hour', 'Within the hour', 'Readings every 15 minutes', I.clock),
@@ -972,7 +968,7 @@ export default class Main extends Component {
     const items = [], left = [];
     const add = (key, name, icon, n, why, cat) => { if (n > 0) items.push({ key, name, icon, n: Math.max(1, Math.round(n)), why, cat }); };
     const rtus = clamp(Math.round(area.mid / 25000), 1, 24);
-    const risers = clamp(Math.round(fp / 8000), 1, 12);
+    const pipes = clamp(Math.round(fp / 8000), 1, 12);
     const elevs = Math.max(1, Math.round(F / 6) + (area.mid >= 100000 ? 1 : 0));
     const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
     const need = (name, places) => left.push({ name, why: 'You picked this job, but it needs ' + places + ' to watch. Add one of those to cover it.' });
@@ -987,7 +983,7 @@ export default class Main extends Component {
       if (!A.roof && !A.floors && !A.mech) need('Water sensors', 'the roof, mechanical rooms or floors');
     } else skip('Water sensors', 'for water getting in', tr.leaks ? 'You mentioned leaks before, so you may want this.' : '');
     if (W.pipes) {
-      if (A.walls || A.floors) add('pipel', 'Pipe leak sensors', SI.acoustic, risers * Math.ceil(F / 2), 'Spread along about ' + plural(risers, 'pipe') + ' so a leak is heard inside the wall before it shows.', 'water');
+      if (A.walls || A.floors) add('pipel', 'Pipe leak sensors', SI.acoustic, pipes * Math.ceil(F / 2), 'Spread along about ' + plural(pipes, 'pipe') + ' so a leak is heard inside the wall before it shows.', 'water');
       if (A.mech) add('press', 'Pressure sensors', SI.pressure, 2 + (tr.leaks ? 1 : 0), 'On the main supply and the boiler loop. A slow drop in pressure points to a hidden leak.', 'water');
       if (!A.walls && !A.floors && !A.mech) need('Pipe leak sensors', 'inside walls, floors or mechanical rooms');
     } else skip('Pipe leak and pressure sensors', 'pipes', !W.water && tr.leaks ? 'You mentioned leaks before, so you may want this.' : '');
@@ -1000,7 +996,7 @@ export default class Main extends Component {
     } else skip('Vibration sensors', 'equipment', tr.hvac ? 'You mentioned breakdowns before, so you may want this.' : '');
     if (W.heat) {
       if (A.elec || A.floors) add('therm', 'Panel heat sensors', SI.thermal, (A.floors ? F : 0) + (A.elec ? 2 : 0) + (tr.electrical ? 2 : 0), 'Inside panel doors' + (A.floors ? ', one per floor' : '') + '. Hot connections are an early fire warning' + (tr.electrical ? ', so panels with past problems get an extra.' : '.'), 'elec');
-      if (A.walls || A.mech) add('sprp', 'Sprinkler pressure sensors', SI.pressure, risers, 'One per sprinkler pipe, so a closed valve or leak shows up before a fire test does.', 'elec');
+      if (A.walls || A.mech) add('sprp', 'Sprinkler pressure sensors', SI.pressure, pipes, 'One per sprinkler pipe, so a closed valve or leak shows up before a fire test does.', 'elec');
       if (!A.elec && !A.floors && !A.walls && !A.mech) need('Heat and sprinkler sensors', 'electrical rooms, floors, walls or mechanical rooms');
     } else skip('Panel heat and sprinkler sensors', 'heat and fire risk', tr.electrical ? 'You mentioned electrical problems before, so you may want this.' : '');
     if (W.structure) {
@@ -1014,7 +1010,7 @@ export default class Main extends Component {
       else need('Room air sensors', 'floors or mechanical rooms');
     } else skip('Room air sensors', 'air and comfort');
     if (C.shutoff) {
-      if (W.water || W.pipes) add('valve', 'Automatic shut-off valves', G.I.valve, (A.walls ? risers : 1) + (A.mech ? 1 : 0), 'They close on their own when a big leak is detected. A plumber fits these.', 'water');
+      if (W.water || W.pipes) add('valve', 'Automatic shut-off valves', G.I.valve, (A.walls ? pipes : 1) + (A.mech ? 1 : 0), 'They close on their own when a big leak is detected. A plumber fits these.', 'water');
       else left.push({ name: 'Automatic shut-off valves', why: 'They only act on leak alerts, so add water or pipe leaks to use them.' });
     } else if (W.water || W.pipes) left.push({ name: 'Automatic shut-off valves', why: 'You did not ask for automatic water shut-off.' });
 
@@ -1236,6 +1232,7 @@ export default class Main extends Component {
     });
   }
   diagPick(step, v) {
+    if (step.info) return;  // information page: everything is always on
     const s = this.state;
     const dg = Object.assign({}, s.dg);
     if (step.kind === 'single') {
@@ -1338,7 +1335,7 @@ export default class Main extends Component {
           pick: () => this.diagPick(step, o.v)
         };
       });
-      out.dq = { kicker: step.kicker + (step.kind === 'multi' || step.kind === 'team' ? ' · pick ' + (step.max ? 'up to ' + step.max : 'any') : ''), q: step.q, help: step.help, opts, isTiles: step.kind === 'single' || step.kind === 'multi', isSize: step.kind === 'size', isTeam: step.kind === 'team' };
+      out.dq = { kicker: step.kicker + (!step.info && (step.kind === 'multi' || step.kind === 'team') ? ' · pick ' + (step.max ? 'up to ' + step.max : 'any') : ''), q: step.q, help: step.help, opts, isTiles: step.kind === 'single' || step.kind === 'multi', isSize: step.kind === 'size', isTeam: step.kind === 'team' };
       const ok = this.diagAnswered(step);
       out.diagNextOp = ok ? 1 : 0.4; out.diagNextPE = ok ? 'auto' : 'none'; out.diagNextDis = String(!ok);
       out.diagNextLabel = st === steps.length - 1 ? 'See my plan' : 'Continue';

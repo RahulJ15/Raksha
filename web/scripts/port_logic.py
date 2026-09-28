@@ -121,9 +121,24 @@ for old, new in [
      "goSignup: () => this.skipToDashboard(), goLogin: () => this.skipToDashboard(),"),
     ("else this.go('auth', { authMode: 'signup' }); },", "else this.go('diag', { diagStep: 0, diagDir: 1 }); },"),
     ("if (c === 0) this.go('auth', { authMode: 'signup' });", "if (c === 0) this.go('intro');"),
+    # Checkup: Raksha watches for everything, everywhere. The first question becomes a "here's what it
+    # does" page (all jobs ticked, not selectable) and the "where should they watch" question is removed.
+    ("dg: { watch: [], where: [],", "dg: { watch: ['water', 'pipes', 'equip', 'heat', 'structure', 'air'], where: ['roof', 'mech', 'walls', 'elec', 'floors', 'grounds'],"),
+    ("{ key: 'watch', kind: 'multi', kicker: 'Focus', q: 'What should your sensors watch for?', help: 'Pick every job you want covered. We only suggest sensors for the jobs you choose.', opts: [",
+     "{ key: 'watch', kind: 'multi', info: true, kicker: 'What it does', q: 'Here is what Raksha watches for', help: 'All of these are covered automatically, across the whole site. Nothing to choose, just continue.', opts: ["),
+    ("if (st === 'kit') { this.go('diag', { diagStep: 7,", "if (st === 'kit') { this.go('diag', { diagStep: this.diagDef().steps.length,"),
+    ("out.dq = { kicker: step.kicker + (step.kind === 'multi' || step.kind === 'team' ?",
+     "out.dq = { kicker: step.kicker + (!step.info && (step.kind === 'multi' || step.kind === 'team') ?"),
+    ("""  diagPick(step, v) {
+    const s = this.state;""", """  diagPick(step, v) {
+    if (step.info) return;  // information page: everything is always on
+    const s = this.state;"""),
 ]:
     assert body.count(old) == 1, old
     body = body.replace(old, new)
+where_step = re.search(r"      \{ key: 'where', kind: 'multi'.*?\] \},\n", body, re.S)
+assert where_step, "where step not found"
+body = body[:where_step.start()] + body[where_step.end():]
 (d / "Main.jsx").write_text(body.lstrip())
 (d / "logic.raw.js").unlink()
 print("ok")

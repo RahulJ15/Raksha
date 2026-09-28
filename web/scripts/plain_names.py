@@ -19,6 +19,7 @@ RENAMES = [
     (r"\bsprinkler riser\b", "sprinkler pipe"),
     (r"\bRiser ([AB])\b", r"Water pipe \1"),
     (r"\briser\b", "pipe"),
+    (r"\brisers\b", "pipes"),
     (r"\bPanel L1\b", "Electrical panel"),
     (r"\bBoiler B-1\b", "Boiler"),
     (r"\bPump P-2\b", "Water pump"),
