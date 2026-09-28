@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { revealInScroller } from './scroll';
 
 // First-visit walkthrough of the dashboard, plus a standing pointer to Scan (the part judges should try).
 // Shown once per browser; ?tour=1 replays it.
@@ -32,10 +33,10 @@ function useRect(sel, containerRef, active) {
       const root = containerRef.current?.parentElement;
       const el = root?.querySelector(sel);
       if (!root || !el) { setRect(null); return; }
-      if (first) { el.scrollIntoView({ block: 'nearest' }); first = false; }
+      if (first) { revealInScroller(el, { room: 220 }); first = false; }  // never scrollIntoView: it shifts the app frame
       const t = el.getBoundingClientRect();
       const r = root.getBoundingClientRect();
-      const next = { left: t.left - r.left, top: t.top - r.top, width: t.width, height: t.height, W: r.width, H: r.height };
+      const next = { left: t.left - r.left, top: t.top - r.top, width: t.width, height: t.height, W: r.width, H: r.height, rail: el.closest('nav') ? 1 : 0 };
       setRect((prev) => (prev && Object.keys(next).every((k) => Math.abs(prev[k] - next[k]) < 0.5) ? prev : next));
     };
     measure();
@@ -69,14 +70,28 @@ export default function Tour({ screen, scanOpen, busy, onOpenScan }) {
   const next = () => { if (step + 1 >= STEPS.length) { finish(); onOpenScan(); } else setStep(step + 1); };
 
   const pad = 6;
-  const card = rect && (() => {
-    const w = Math.min(320, rect.W - 24);
-    const inRail = rect.left < 80;
-    let left = inRail ? rect.left + rect.width + 14 : Math.min(Math.max(12, rect.left), rect.W - w - 12);
-    let top = inRail ? Math.max(12, rect.top - 8) : rect.top + rect.height + pad + 12;
-    if (inRail && left + w > rect.W - 12) left = rect.W - w - 12;
-    if (!inRail && top + 190 > rect.H) top = Math.max(12, rect.top - pad - 12 - 190);
-    return { left, top, width: w };
+  const CARD_H = 200;
+  const vis = rect && (() => {  // highlight clipped to what is on screen (inside the padding ring)
+    const top = Math.max(rect.top, 8 + pad);
+    const bottom = Math.min(rect.top + rect.height, rect.H - 8 - pad);
+    const left = Math.max(rect.left, 4 + pad);
+    const right = Math.min(rect.left + rect.width, rect.W - 4 - pad);
+    return { ...rect, top, left, height: Math.max(0, bottom - top), width: Math.max(0, right - left) };
+  })();
+  const card = vis && (() => {
+    const w = Math.min(320, vis.W - 24);
+    const inRail = vis.rail === 1;
+    const clampTop = (t) => Math.min(Math.max(12, t), vis.H - CARD_H - 12);
+    if (inRail) {  // beside the menu button; narrower on small screens so it never covers the button
+      const left = vis.left + vis.width + 14;
+      return { left, top: clampTop(vis.top - 8), width: Math.min(w, vis.W - left - 10) };
+    }
+    const left = Math.min(Math.max(12, vis.left), vis.W - w - 12);
+    const below = vis.top + vis.height + pad + 12;
+    const above = vis.top - pad - 12 - CARD_H;
+    if (below + CARD_H <= vis.H - 12) return { left, top: below, width: w };
+    if (above >= 12) return { left, top: above, width: w };
+    return { left, top: vis.H - CARD_H - 12, width: w };  // no room either side: pin to the bottom edge
   })();
 
   return (
@@ -86,14 +101,14 @@ export default function Tour({ screen, scanOpen, busy, onOpenScan }) {
         @keyframes ns-tour-float { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
       `}</style>
 
-      {touring && rect && (
+      {touring && vis && (
         <>
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()} />
-          <div style={{ position: 'absolute', left: rect.left - pad, top: rect.top - pad, width: rect.width + pad * 2, height: rect.height + pad * 2,
+          <div style={{ position: 'absolute', left: vis.left - pad, top: vis.top - pad, width: vis.width + pad * 2, height: vis.height + pad * 2,
             borderRadius: 20, boxShadow: '0 0 0 9999px rgba(8,20,20,.55)', transition: 'all 320ms cubic-bezier(.3,1.2,.5,1)' }}>
             <div style={{ position: 'absolute', inset: 0, borderRadius: 20, border: '2px solid var(--acc)', animation: 'ns-tour-ring 1.6s infinite' }} />
           </div>
-          <div role="dialog" aria-label={cur.title} style={{ position: 'absolute', ...card, pointerEvents: 'auto', background: 'var(--panel)', color: 'var(--tx)',
+          <div role="dialog" aria-label={cur.title} style={{ position: 'absolute', ...card, boxSizing: 'border-box', pointerEvents: 'auto', background: 'var(--panel)', color: 'var(--tx)',
             borderRadius: 20, padding: 16, boxShadow: 'var(--shadow)', transition: 'left 320ms, top 320ms', animation: 'ns-pop 260ms ease both' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)', letterSpacing: '.06em', textTransform: 'uppercase' }}>Quick tour · {step + 1} of {STEPS.length}</div>
             <div className="ns-serif" style={{ fontSize: 21, lineHeight: '26px', fontWeight: 500, margin: '4px 0 6px' }}>{cur.title}</div>

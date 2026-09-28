@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSite } from './api';
+import { revealInScroller } from './infrasensor/scroll';
 import Main from './infrasensor/Main';
 
 const POLL_MS = 30000;
@@ -14,6 +15,22 @@ function startScreen() {
 export default function App() {
   const [site, setSite] = useState(null);
   const [error, setError] = useState(null);
+
+  // When a section is expanded, bring what it revealed into view (it often opens below the fold).
+  useEffect(() => {
+    const onClick = (e) => {
+      const btn = e.target.closest?.('main button[aria-expanded]');
+      if (!btn || btn.getAttribute('aria-expanded') === 'true') return;
+      // Twice: once as it starts opening, once after the open animation has finished growing the page.
+      [320, 800].forEach((ms) => setTimeout(() => {
+        if (btn.getAttribute('aria-expanded') !== 'true') return;
+        revealInScroller(btn.closest('section') || btn.parentElement, { smooth: true, alignTop: true });
+      }, ms));
+    };
+    // Capture phase: runs before React toggles the section, so we see its state before the click.
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
 
   useEffect(() => {
     let alive = true;

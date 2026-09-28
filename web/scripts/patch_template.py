@@ -56,6 +56,15 @@ once("""        <section style={css("margin-top: 10px")}>
      """        <section data-tour="attention" style={css("margin-top: 10px")}>
           <div style={css("padding: 6px 16px 2px 6px; display: flex; align-items: center; gap: 10px")}>""")
 
+# The carousel page dots under "Needs attention" are decorative only (not clickable); removed.
+once("""              <div aria-hidden="true" style={css("display: flex; justify-content: center; gap: 5px; padding-bottom: 4px")}>
+                {(v.udots || []).map((d, d$i) => (<Fragment key={d$i}>
+                  <span className="ns-pdot" style={css(`height: 6px; border-radius: 999px; width: ${d.w}px; background: ${d.bg}`)}>
+                  </span>
+                </Fragment>))}
+              </div>
+""", "")
+
 # Class hooks for the desktop layout (see src/index.css).
 once('''<div style={css("flex-grow: 1; min-height: 0; position: relative; overflow: hidden; background: var(--map); border-top: 1px solid var(--line)")}>''',
      '''<div className="ns-mapview" style={css("flex-grow: 1; min-height: 0; position: relative; overflow: hidden; background: var(--map); border-top: 1px solid var(--line)")}>''')

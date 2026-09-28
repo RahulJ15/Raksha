@@ -1,7 +1,14 @@
 body { margin: 0; min-height: 100vh; background: #d9e3c8; font-family: 'Manrope', system-ui, sans-serif; }
 .stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 .stage > div { box-shadow: 0 30px 60px -30px rgba(21, 48, 47, .5); border-radius: 28px; }
-@media (max-width: 420px) { .stage { display: block; } .stage > div { border-radius: 0; box-shadow: none; } }
+/* Phones: the app fills the screen (no page scrolling); only the app's own panels scroll. */
+@media (max-width: 420px) {
+  .stage { display: block; }
+  .stage > div { width: 100vw !important; height: 100dvh !important; border-radius: 0; box-shadow: none; }
+}
+/* The app frame never scrolls, not even from script (scrollIntoView would otherwise shift the layout). */
+.stage > div { overflow: clip !important; }
+html, body { overscroll-behavior: none; }
 .boot { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; color: #15302F; line-height: 1.6; padding: 16px; }
 
 /* Desktop: the app fills the window instead of sitting in a phone frame. The layout is the mobile design,

@@ -336,12 +336,6 @@ export default function renderTemplate(v) {
                   </article>
                 </Fragment>))}
               </div>
-              <div aria-hidden="true" style={css("display: flex; justify-content: center; gap: 5px; padding-bottom: 4px")}>
-                {(v.udots || []).map((d, d$i) => (<Fragment key={d$i}>
-                  <span className="ns-pdot" style={css(`height: 6px; border-radius: 999px; width: ${d.w}px; background: ${d.bg}`)}>
-                  </span>
-                </Fragment>))}
-              </div>
               {v.attnHasMore ? (<>
                 <div style={css("padding: 10px 16px 0 4px")}>
                   <button className="ns-btn ns-chip" onClick={v.toggleAttnAll} style={css("width: 100%; height: 42px; border-radius: 21px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--tx)")}>
