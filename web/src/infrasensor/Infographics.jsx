@@ -135,48 +135,23 @@ export function CostLadder() {
   );
 }
 
-// Machines: planned and sensor-predicted maintenance vs waiting for a breakdown.
+// Machines: the one repair bill that matters, and one plain fact about planning it.
 export function FixEarlyCard() {
   const F = FIGURES;
-  const tile = (big, small, color) => (
-    <div style={{ flex: 1, padding: '10px 12px', borderRadius: 14, background: 'var(--panel2)' }}>
-      <div className="ns-num" style={{ fontSize: 24, fontWeight: 700, color }}>{big}</div>
-      <div style={{ fontSize: 12, lineHeight: '16px' }}>{small}</div>
-    </div>
-  );
   return (
     <div style={card}>
-      <div style={kicker}>Why fix it before it breaks</div>
-      <div className="ns-serif" style={{ fontSize: 20, lineHeight: '25px', fontWeight: 500, margin: '2px 0 10px' }}>Catching it early costs less</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 12, fontWeight: 700, color: 'var(--tx2)' }}>
-        <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--crit)', color: 'var(--tagTx)' }}>Wait for breakdown</span>→
-        <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--watch)', color: 'var(--tagTx)' }}>Planned repair</span>→
-        <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--ok)', color: 'var(--tagTx)' }}>Sensor-predicted</span>
+      <div style={kicker}>Why fix it now</div>
+      <div style={{ marginTop: 6 }}>
+        <div className="ns-num" style={{ fontSize: 32, lineHeight: '38px', fontWeight: 700, color: 'var(--ok)', whiteSpace: 'nowrap' }}>~{usd(F.blowerMotor.avg)}</div>
+        <div style={{ fontSize: 14, lineHeight: '19px' }}>typical cost to replace a worn motor now</div>
+        <Cite ids={['blowerMotor']} block />
       </div>
-      <div style={{ fontSize: 12, fontWeight: 700, margin: '2px 0 6px' }}>Typical repair bills for this kind of equipment</div>
-      {[
-        { label: 'Replace a worn fan / blower motor', f: F.blowerMotor, ids: ['blowerMotor'] },
-        { label: 'Replace an AC compressor', f: F.compressor, ids: ['compressor'] },
-      ].map((r) => (
-        <div key={r.label} style={{ marginBottom: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
-            <span>{r.label}</span>
-            <span className="ns-num" style={{ fontWeight: 700 }}>{usd(r.f.avg)}{r.f.lo ? <span style={{ fontWeight: 500, color: 'var(--tx2)' }}> ({usd(r.f.lo)}–{usd(r.f.hi)})</span> : null}</span>
-          </div>
-          <span style={{ display: 'block', height: 8, marginTop: 4, borderRadius: 4, background: 'var(--panel2)', overflow: 'hidden' }}>
-            <span style={{ display: 'block', height: '100%', width: `${(r.f.avg / F.compressor.hi) * 100}%`, borderRadius: 4, background: 'var(--watch)' }} />
-          </span>
-          <Cite ids={r.ids} block />
-        </div>
-      ))}
-      <div style={{ fontSize: 12, fontWeight: 700, margin: '12px 0 6px' }}>What planned maintenance saves overall</div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        {tile(`${F.preventive.lo}–${F.preventive.hi}%`, <>cheaper with planned maintenance than waiting for breakdowns<Cite ids={['preventive']} block /></>, 'var(--watch)')}
-        {tile(`+${F.predictive.lo}–${F.predictive.hi}%`, <>more saved when sensors predict the fault, like this scan<Cite ids={['predictive']} block /></>, 'var(--ok)')}
+      <div style={{ marginTop: 14 }}>
+        <div className="ns-num" style={{ fontSize: 32, lineHeight: '38px', fontWeight: 700, color: 'var(--watch)', whiteSpace: 'nowrap' }}>{F.preventive.lo}–{F.preventive.hi}% cheaper</div>
+        <div style={{ fontSize: 14, lineHeight: '19px' }}>when repairs are planned, instead of waiting for it to break</div>
+        <Cite ids={['preventive']} block />
       </div>
-      <p style={{ margin: '8px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>US national averages for single repairs. The savings figures are for a whole maintenance programme, not one repair.</p>
-      <DataFrom ids={['blowerMotor', 'preventive']} />
-      <Sources ids={['blowerMotor', 'compressor', 'preventive', 'predictive']} />
+      <Sources ids={['blowerMotor', 'preventive']} />
     </div>
   );
 }
@@ -229,37 +204,38 @@ export function DeteriorationChart({ data }) {
   const ticks = Array.from({ length: days + 1 }, (_, d) => d).filter((d) => d * 24 <= xMax && d % Math.ceil(days / 7) === 0);  // only days the test reached
   return (
     <div style={{ ...card }}>
-      <div style={kicker}>How fast a bearing wears out</div>
+      <div style={kicker}>What happens if you wait</div>
       <div className="ns-serif" style={{ fontSize: 20, lineHeight: '25px', fontWeight: 500, margin: '2px 0 4px' }}>
-        {warnDays != null ? <>Quiet for days, then it climbs: <span style={{ color: 'var(--crit)' }}>{warnDays.toFixed(1)} days</span> of warning</> : 'Quiet for days, then it climbs'}
+        {warnDays != null
+          ? <>Once it starts shaking more, a worn bearing can break in <span style={{ color: 'var(--crit)' }}>about {Math.round(warnDays)} days</span></>
+          : 'Once it starts shaking more, it gets worse fast'}
       </div>
-      <p style={{ margin: '0 0 6px', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>
-        A real bearing run nonstop until it failed: a 1-second vibration reading every 10 minutes for {(xMax / 24).toFixed(1)} days (NASA test data).
+      <p style={{ margin: '0 0 6px', fontSize: 13, lineHeight: '18px', color: 'var(--tx2)' }}>
+        In a real test, a bearing ran nonstop until it broke. It shook normally for {Math.round((rise ?? xMax) / 24)} days, then more and more, then broke.
       </p>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Vibration of a real bearing over ${days} days until failure`} style={{ display: 'block' }}>
         <line x1={P.l} x2={W - P.r} y1={Y(data.normal_rms)} y2={Y(data.normal_rms)} stroke="var(--ok)" strokeDasharray="3 3" />
-        <text x={P.l + 4} y={Y(data.normal_rms) - 5} style={{ fontSize: 9, fill: 'var(--ok)' }}>normal level</text>
+        <text x={P.l + 4} y={Y(data.normal_rms) - 5} style={{ fontSize: 9, fill: 'var(--ok)' }}>normal</text>
         {rise != null && <>
           <rect x={X(rise)} y={P.t} width={W - P.r - X(rise)} height={H - P.t - P.b} fill="var(--crit)" opacity="0.08" />
           <line x1={X(rise)} x2={X(rise)} y1={P.t} y2={H - P.b} stroke="var(--watch)" strokeDasharray="3 3" />
-          <text x={X(rise) - 4} y={P.t + 10} textAnchor="end" style={{ fontSize: 9, fontWeight: 700, fill: 'var(--watch)' }}>first clear rise</text>
+          <text x={X(rise) - 4} y={P.t + 10} textAnchor="end" style={{ fontSize: 9, fontWeight: 700, fill: 'var(--watch)' }}>starts wearing</text>
         </>}
         <path d={line} fill="none" stroke="var(--tx)" strokeWidth="1.6" strokeLinejoin="round" />
         <circle cx={X(xMax)} cy={Y(ys[ys.length - 1])} r="3.5" fill="var(--crit)" />
-        <text x={X(xMax) - 6} y={Y(ys[ys.length - 1]) + 3} textAnchor="end" style={{ fontSize: 9, fontWeight: 700, fill: 'var(--crit)' }}>failed</text>
+        <text x={X(xMax) - 6} y={Y(ys[ys.length - 1]) + 3} textAnchor="end" style={{ fontSize: 9, fontWeight: 700, fill: 'var(--crit)' }}>breaks</text>
         <line x1={P.l} x2={W - P.r} y1={H - P.b} y2={H - P.b} stroke="var(--line2)" />
         {ticks.map((d) => (
           <text key={d} x={X(d * 24)} y={H - 8} textAnchor="middle" style={{ fontSize: 9, fill: 'var(--tx2)' }}>day {d}</text>
         ))}
-        <text x={4} y={P.t + 6} style={{ fontSize: 9, fill: 'var(--tx2)' }}>vibration</text>
+        <text x={4} y={P.t + 6} style={{ fontSize: 9, fill: 'var(--tx2)' }}>shaking</text>
       </svg>
-      <p style={{ margin: '6px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>
-        "First clear rise" = vibration staying at least {data.rise_factor}× its normal level (our rule, applied to the real recordings).
-        Raksha's job is to catch that rise, so the repair can be planned instead of forced.
+      <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>
+        Raksha spots that early rise, so you can plan the repair instead of dealing with a breakdown.
       </p>
       <span style={{ display: 'flex', marginTop: 6 }}>
         <a href="https://data.nasa.gov/dataset/ims-bearings" target="_blank" rel="noreferrer"
-          title="IMS Bearing Data Set, Center for Intelligent Maintenance Systems, University of Cincinnati. NASA Prognostics Data Repository."
+          title={`IMS Bearing Data Set, Center for Intelligent Maintenance Systems, University of Cincinnati. NASA Prognostics Data Repository. Test 2, bearing 1: one-second vibration readings every 10 minutes for ${(xMax / 24).toFixed(1)} days. 'Starts wearing' = vibration staying at least ${data.rise_factor}x its normal level (Raksha's rule applied to the real recordings).`}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '1px 7px', borderRadius: 999, border: '1px solid var(--line2)', fontSize: 10, fontWeight: 600, lineHeight: '15px', color: 'var(--tx2)', textDecoration: 'none', background: 'var(--panel)' }}>
           <LineIcon name="doc" size={11} />NASA · IMS, University of Cincinnati
         </a>

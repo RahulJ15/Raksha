@@ -13,7 +13,16 @@ const ACCEPT = 'image/*,.bmp,.csv,.npz';
 
 // Model confidence is not accuracy, and softmax saturates: never show a flat "100%".
 export const fmtPct = (p) => (p >= 0.995 ? '>99%' : p > 0 && p < 0.005 ? '<1%' : `${Math.round(p * 100)}%`);
-const confWord = (p) => (p >= 0.95 ? 'Very confident' : p >= 0.8 ? 'Confident' : p >= 0.6 ? 'Fairly sure' : 'Unsure');
+// Confidence shown as a plain level, not a number: High (80%+), Medium (60-80%), Low (under 60%).
+export const level = (p) => (p >= 0.8 ? 'High' : p >= 0.6 ? 'Medium' : 'Low');
+const LEVEL_COLOR = { High: 'var(--ok)', Medium: 'var(--watch)', Low: 'var(--tx2)' };
+export function LevelPill({ p, suffix = '' }) {
+  const l = level(p);
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+      color: LEVEL_COLOR[l], border: `1.5px solid ${LEVEL_COLOR[l]}`, whiteSpace: 'nowrap' }}>{l}{suffix}</span>
+  );
+}
 
 const pretty = (s) => s.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
 const isImage = (f) => !/\.(csv|npz)$/i.test(f.name);
@@ -172,7 +181,7 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
           <span style={{ display: 'block', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
           {result && (
             <span style={{ display: 'block', fontSize: 14, color: tone, fontWeight: 600 }}>
-              {pretty(result.name)} <span className="ns-num" style={{ color: 'var(--tx2)', fontWeight: 500 }}>· {fmtPct(result.confidence)}</span>
+              {pretty(result.name)} <span style={{ color: 'var(--tx2)', fontWeight: 500 }}>· {level(result.confidence)} confidence</span>
             </span>
           )}
           {!result && busy && <span style={{ fontSize: 12, color: 'var(--tx2)' }}>Working…</span>}
@@ -185,7 +194,7 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px 10px', flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12, color: 'var(--tx2)' }}>
           {det ? (det.auto ? (det.type || det.type === undefined ? `Detected: ${det.how}` : 'Not recognised') : 'Type chosen by you') : 'Detecting…'}
-          {det?.auto && det.type && det.type !== 'machine' ? ` · ${fmtPct(det.confidence)}` : ''}
+
         </span>
         <select aria-label="File type" value={override || ''} onChange={(e) => onType(e.target.value)}
           style={{ marginLeft: 'auto', font: 'inherit', fontSize: 12, padding: '4px 8px', borderRadius: 999, border: '1.5px solid var(--line2)', background: 'var(--bg)', color: 'var(--tx)' }}>
@@ -210,8 +219,7 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '2px 0 8px' }}>
             <span className="ns-serif" style={{ fontSize: 28, lineHeight: '34px', fontWeight: 500, flexGrow: 1 }}>{pretty(result.name)}</span>
             <span style={{ textAlign: 'right' }}>
-              <span className="ns-num" style={{ display: 'block', fontSize: 28, fontWeight: 700, color: tone }}>{fmtPct(result.confidence)}</span>
-              <span style={{ fontSize: 11, color: 'var(--tx2)' }}>{confWord(result.confidence)}</span>
+              <LevelPill p={result.confidence} suffix=" confidence" />
             </span>
           </div>
           {explain(result.name) && (
@@ -219,7 +227,7 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
           )}
           {result.early_warning && (
             <p style={{ margin: '0 0 10px', padding: '8px 10px', borderRadius: 12, background: 'var(--panel2)', fontSize: 12, lineHeight: '17px' }}>
-              <LineIcon name="alert" size={14} color="var(--watch)" style={{ verticalAlign: '-2px', marginRight: 4 }} />Early warning: the model leans healthy ({fmtPct(result.probs.healthy)}) but isn't sure, so check it on the next visit.
+              <LineIcon name="alert" size={14} color="var(--watch)" style={{ verticalAlign: '-2px', marginRight: 4 }} />Early warning: it looks mostly healthy, but not clearly enough to be sure. Check it on the next visit.
             </p>
           )}
 
@@ -241,7 +249,10 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
             </figure>
           )}
 
-          {/* 3. Why it matters, with cited real-world figures */}
+          {/* 3. Quick AI summary, with the full explanation one tap away */}
+          <AiSummary verdict={verdict} busy={verdictBusy} error={verdictErr} />
+
+          {/* 4. Why it matters, with cited real-world figures */}
           {result.fault && result.label === 'pipe_leak' && <CostLadder />}
           {result.fault && (type === 'bearing' || ['bearing_fault', 'unbalanced_rotor', 'misalignment'].includes(result.label)) && <DeteriorationChart data={wearCurve} />}
           {result.fault && result.label !== 'pipe_leak' && ['machine', 'bearing', 'thermal', 'sound'].includes(type) && <FixEarlyCard />}
@@ -250,12 +261,9 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
           <Disclosure title="What this means" summary={explain(result.name) ? `Check first: ${explain(result.name).check.split('. ')[0].replace(/\.$/, '')}` : ''}>
             <InfoCard key={`${type}:${result.name}`} entry={explain(result.name)} open label="In plain words" />
           </Disclosure>
-          <Disclosure title="AI explanation" summary={verdictBusy ? 'Writing…' : verdict?.headline || verdictErr || ''}>
-            <VerdictCard verdict={verdict} busy={verdictBusy} error={verdictErr} bare />
-          </Disclosure>
-          <Disclosure title="All possibilities" summary={probs.slice(0, 3).map(([l, p]) => `${pretty(l)} ${fmtPct(p)}`).join(' · ')}>
-            {probs.map(([label, p]) => (
-              <div key={label} style={{ display: 'grid', gridTemplateColumns: '1fr 44px', alignItems: 'center', gap: '4px 10px', marginBottom: 8 }}>
+          <Disclosure title="Other possibilities" summary={probs.slice(1, 3).map(([l, p]) => `${pretty(l)}: ${level(p).toLowerCase()}`).join(' · ')}>
+            {probs.slice(1).map(([label, p]) => (
+              <div key={label} style={{ display: 'grid', gridTemplateColumns: '1fr 60px', alignItems: 'center', gap: '4px 10px', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, color: 'var(--tx2)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   {pretty(label)}
                   {explain(label) && (
@@ -265,7 +273,7 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
                     </button>
                   )}
                 </span>
-                <span className="ns-num" style={{ fontSize: 13, textAlign: 'right' }}>{fmtPct(p)}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, textAlign: 'right', color: LEVEL_COLOR[level(p)] }}>{level(p)}</span>
                 <span style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'var(--panel2)', overflow: 'hidden' }}>
                   <span style={{ display: 'block', height: '100%', width: `${p * 100}%`, borderRadius: 3, background: label === result.label || pretty(label) === pretty(result.name) ? tone : 'var(--line2)' }} />
                 </span>
@@ -345,12 +353,11 @@ function SensorBreakdown({ result }) {
         <div key={r.sensor} style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '4px 0', fontWeight: r.sensor === 'Combined' ? 700 : 400, borderTop: r.sensor === 'Combined' ? '1px solid var(--line)' : 'none' }}>
           <span style={{ width: 128, flexShrink: 0, fontSize: 13, color: r.sensor === 'Combined' ? 'var(--tx)' : 'var(--tx2)' }}>{r.sensor}</span>
           <span style={{ flexGrow: 1, fontSize: 14, color: r.fault ? 'var(--crit)' : 'var(--ok)' }}>{pretty(r.name)}</span>
-          <span className="ns-num" style={{ fontSize: 13 }}>{fmtPct(r.confidence)}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: LEVEL_COLOR[level(r.confidence)] }}>{level(r.confidence)}</span>
         </div>
       ))}
       <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>
         {agree ? 'Both sensors agree, so this is a strong signal.' : 'The sensors disagree. The combined model weighs both; confirm on site before sending anyone.'}
-        {' '}Averaged over {result.windows} one-second windows.
       </p>
     </div>
   );
@@ -370,7 +377,7 @@ function AssetCard({ asset, items, live, machine }) {
         <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, padding: '2px 0' }}>
           <span style={{ width: 128, flexShrink: 0, color: 'var(--tx2)' }}>{TYPE_LABEL[it.type]}</span>
           <span style={{ flexGrow: 1, color: it.result.fault ? 'var(--crit)' : 'var(--ok)' }}>{pretty(it.result.name)}</span>
-          <span className="ns-num">{fmtPct(it.result.confidence)}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: LEVEL_COLOR[level(it.result.confidence)] }}>{level(it.result.confidence)}</span>
         </div>
       ))}
       {live.length > 0 && (
@@ -592,6 +599,37 @@ function SampleGallery({ samples, picked, onPick, onScenario }) {
           <p style={{ margin: '10px 0 0', fontSize: 11, lineHeight: '16px', color: 'var(--tx2)' }}>
             None of these were used to train the models. Add samples from two folders, or pick a machine above, to see the sensors agree or disagree.
           </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Short AI summary shown above the graphs; the full explanation opens on tap.
+function AiSummary({ verdict, busy, error }) {
+  const [open, setOpen] = useState(false);
+  if (error && !busy) return null;
+  const nextStep = verdict?.next_steps?.[0] || '';
+  return (
+    <div style={{ marginBottom: 12, padding: 14, borderRadius: 18, background: 'var(--panel2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--tx2)' }}>
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style={{ color: 'var(--acc)' }}><path className="ns-ic" d="M12 3.5c.6 4.4 4.1 7.9 8.5 8.5-4.4.6-7.9 4.1-8.5 8.5-.6-4.4-4.1-7.9-8.5-8.5 4.4-.6 7.9-4.1 8.5-8.5z" /></svg>
+        AI summary
+      </div>
+      {busy || !verdict ? (
+        <div aria-label="Writing the summary" style={{ display: 'flex', gap: 5, padding: '10px 0 4px' }}>
+          {[0, 1, 2].map((i) => <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc)', animation: `ns-dotp 1s ${i * 0.15}s infinite` }} />)}
+        </div>
+      ) : (
+        <>
+          <div className="ns-serif" style={{ fontSize: 18, lineHeight: '23px', fontWeight: 500, margin: '4px 0 4px' }}>{verdict.headline}</div>
+          {nextStep && <p style={{ margin: 0, fontSize: 14, lineHeight: '20px' }}><strong>Next step:</strong> {nextStep}</p>}
+          <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)}
+            style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: 'var(--acc)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            {open ? 'Hide detailed explanation' : 'See detailed explanation'}
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }}><path className="ns-ic" d="M6 9l6 6 6-6" /></svg>
+          </button>
+          {open && <div style={{ marginTop: 10 }}><VerdictCard verdict={verdict} busy={false} error={null} bare /></div>}
         </>
       )}
     </div>

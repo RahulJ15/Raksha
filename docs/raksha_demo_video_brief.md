@@ -67,6 +67,7 @@ small problems become expensive ones, and tells a non-technical contractor exact
   numbers **Manrope**. Both on Google Fonts.
 - **Look:** calm, rounded cards (radius 20–30 px), soft shadows, generous whitespace, simple line icons.
   No stock-photo clutter, no neon, no "AI brain" clichés.
+- **Confidence** is shown as **High / Medium / Low**, never as a percentage.
 - **Tone of voice:** plain, confident, honest. Short sentences. Say "check it on the next visit", not "anomaly
   detected in subsystem".
 
@@ -94,7 +95,8 @@ small problems become expensive ones, and tells a non-technical contractor exact
 **How a bearing wears out** (real run-to-failure data)
 - NASA / University of Cincinnati IMS test 2: a bearing run nonstop for 6.8 days until its outer race failed.
   Vibration stayed at its normal level (~0.077 g) for about 5 days, first rose clearly (staying at least 2×
-  normal) at hour 117, then climbed to 6–9× normal before failure at hour 163.5: **about 1.9 days of warning**.
+  normal) at hour 117, then climbed to 6–9× normal before failure at hour 163.5: **about 2 days** between the
+  first rise and the break (1.9 days). In the app this reads "Once it starts shaking more, a worn bearing can break in about 2 days".
   The "2× normal" threshold is our rule, applied to the real recordings. *NASA Prognostics Data Repository*
 
 **How accurate Raksha is** (tested on data the models never trained on)
@@ -140,7 +142,7 @@ the live app (desktop browser, 1440×900 window). VO = voiceover.
 | 6 | 1:00–1:22 | SCREEN | Scan → Try a pair → "Two sensors agree". Show "Detected: sound + vibration capture" and "Detected: thermal image", then the red **Confirmed problem: raise a ticket** card | **One box. Any sensor. Auto-detected.** | "Drop in any sensor file: sound, vibration, a thermal photo, a picture of a crack. Raksha works out what it is and runs the right AI. Here, sound and vibration say bearing fault and the thermal camera sees overheating. Two independent sensors agree, so it raises a ticket." |
 | 7 | 1:22–1:34 | SCREEN | Scan → "Only one sensor sees it" → amber **Check on the next visit** | **One sensor? Check it. Two agree? Send someone.** | "If only one sensor sees it, Raksha doesn't send anyone out. It schedules a check. Fewer false alarms, fewer wasted visits." |
 | 8 | 1:34–1:52 | SCREEN | Microphone folder → Pipe leak. Scroll: big result, what-to-do chips, then the **What waiting can cost** ladder ($500 → $4,918 → $7,286 → $15,400) with source tags. Hover one source tag. | **Fix now: ~$500 · Wait: up to $15,400** · *US averages, cited* | "Every result is in plain English, with what to check and which trade to call, and it shows what waiting costs, using real published repair prices." |
-| 8b | +0:10 (optional) | SCREEN | Sound + vibration folder → Bearing fault → scroll to **How fast a bearing wears out**: flat line for 5 days, first clear rise, climb to failure | **1.9 days of warning** · *NASA run-to-failure test* | "This is a real bearing, run nonstop until it failed. Quiet for five days, then the vibration climbs. That rise is what Raksha catches, about two days before failure." |
+| 8b | +0:10 (optional) | SCREEN | Sound + vibration folder → Bearing fault → scroll to **What happens if you wait**: flat line for 5 days, "starts wearing", climb to "breaks" | **Once it starts shaking more, it can break in about 2 days** · *NASA test* | "This is a real bearing, run nonstop until it broke. It shook normally for five days, then more and more, then broke. Raksha spots that early rise, so you can plan the repair." |
 | 9 | 1:52–2:04 | SLIDE | Three accuracy bars: 94%, 88%, 79%, each with its "tested on…" label; a small line under the 65% microphone figure | **Tested on data it never saw** | "We test only on data the models never trained on: 94% on a machine setup they'd never seen. And because one microphone alone gets 65%, Raksha always combines sensors." |
 | 10 | 2:04–2:14 | SLIDE | Two tiles: 12–18% and +8–12%; a flow "Breakdown → Planned → Predicted" | **Catching it early costs less** · US DOE | "The US Department of Energy puts planned maintenance at twelve to eighteen percent cheaper than waiting for breakdowns, and prediction saves more on top." |
 | 11 | 2:14–2:22 | SLIDE (end card) | Raksha wordmark, "Built on real research data from" plus the five universities, the project link | **Raksha** · *Fix it before it breaks.* | "Raksha. Fix it before it breaks." |
