@@ -134,12 +134,30 @@ export function FixEarlyCard() {
         <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--watch)', color: 'var(--tagTx)' }}>Planned repair</span>→
         <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--ok)', color: 'var(--tagTx)' }}>Sensor-predicted</span>
       </div>
+      <div style={{ fontSize: 12, fontWeight: 700, margin: '2px 0 6px' }}>Typical repair bills for this kind of equipment</div>
+      {[
+        { label: 'Replace a worn fan / blower motor', f: F.blowerMotor, ids: ['blowerMotor'] },
+        { label: 'Replace an AC compressor', f: F.compressor, ids: ['compressor'] },
+      ].map((r) => (
+        <div key={r.label} style={{ marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
+            <span>{r.label}</span>
+            <span className="ns-num" style={{ fontWeight: 700 }}>{usd(r.f.avg)}{r.f.lo ? <span style={{ fontWeight: 500, color: 'var(--tx2)' }}> ({usd(r.f.lo)}–{usd(r.f.hi)})</span> : null}</span>
+          </div>
+          <span style={{ display: 'block', height: 8, marginTop: 4, borderRadius: 4, background: 'var(--panel2)', overflow: 'hidden' }}>
+            <span style={{ display: 'block', height: '100%', width: `${(r.f.avg / F.compressor.hi) * 100}%`, borderRadius: 4, background: 'var(--watch)' }} />
+          </span>
+          <Cite ids={r.ids} block />
+        </div>
+      ))}
+      <div style={{ fontSize: 12, fontWeight: 700, margin: '12px 0 6px' }}>What planned maintenance saves overall</div>
       <div style={{ display: 'flex', gap: 8 }}>
         {tile(`${F.preventive.lo}–${F.preventive.hi}%`, <>cheaper with planned maintenance than waiting for breakdowns<Cite ids={['preventive']} block /></>, 'var(--watch)')}
         {tile(`+${F.predictive.lo}–${F.predictive.hi}%`, <>more saved when sensors predict the fault, like this scan<Cite ids={['predictive']} block /></>, 'var(--ok)')}
       </div>
-      <DataFrom ids={['preventive']} />
-      <Sources ids={['preventive', 'predictive']} />
+      <p style={{ margin: '8px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>US national averages for single repairs. The savings figures are for a whole maintenance programme, not one repair.</p>
+      <DataFrom ids={['blowerMotor', 'preventive']} />
+      <Sources ids={['blowerMotor', 'compressor', 'preventive', 'predictive']} />
     </div>
   );
 }
@@ -173,6 +191,60 @@ export function Disclosure({ title, summary, children, defaultOpen = false }) {
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 220ms', flexShrink: 0 }}><path className="ns-ic" d="M6 9l6 6 6-6" /></svg>
       </button>
       {open && <div style={{ paddingBottom: 12, animation: 'ns-enter 240ms ease both' }}>{children}</div>}
+    </div>
+  );
+}
+
+// Real run-to-failure curve: how a bearing's vibration grows before it fails (NASA IMS data, test 2 bearing 1).
+export function DeteriorationChart({ data }) {
+  if (!data?.points?.length) return null;
+  const W = 320, H = 150, P = { l: 34, r: 8, t: 10, b: 24 };
+  const xs = data.points.map((p) => p[0]), ys = data.points.map((p) => p[1]);
+  const xMax = Math.max(...xs), yMax = Math.max(...ys) * 1.05;
+  const X = (h) => P.l + (h / xMax) * (W - P.l - P.r);
+  const Y = (v) => H - P.b - (v / yMax) * (H - P.t - P.b);
+  const line = data.points.map(([h, v], i) => `${i ? 'L' : 'M'}${X(h).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+  const days = Math.round(xMax / 24);
+  const rise = data.first_rise_hours;
+  const warnDays = rise != null ? ((data.end_hours - rise) / 24) : null;
+  const ticks = Array.from({ length: days + 1 }, (_, d) => d).filter((d) => d * 24 <= xMax && d % Math.ceil(days / 7) === 0);  // only days the test reached
+  return (
+    <div style={{ ...card }}>
+      <div style={kicker}>How fast a bearing wears out</div>
+      <div className="ns-serif" style={{ fontSize: 20, lineHeight: '25px', fontWeight: 500, margin: '2px 0 4px' }}>
+        {warnDays != null ? <>Quiet for days, then it climbs: <span style={{ color: 'var(--crit)' }}>{warnDays.toFixed(1)} days</span> of warning</> : 'Quiet for days, then it climbs'}
+      </div>
+      <p style={{ margin: '0 0 6px', fontSize: 12, lineHeight: '17px', color: 'var(--tx2)' }}>
+        A real bearing run nonstop until it failed: a 1-second vibration reading every 10 minutes for {(xMax / 24).toFixed(1)} days (NASA test data).
+      </p>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Vibration of a real bearing over ${days} days until failure`} style={{ display: 'block' }}>
+        <line x1={P.l} x2={W - P.r} y1={Y(data.normal_rms)} y2={Y(data.normal_rms)} stroke="var(--ok)" strokeDasharray="3 3" />
+        <text x={P.l + 4} y={Y(data.normal_rms) - 5} style={{ fontSize: 9, fill: 'var(--ok)' }}>normal level</text>
+        {rise != null && <>
+          <rect x={X(rise)} y={P.t} width={W - P.r - X(rise)} height={H - P.t - P.b} fill="var(--crit)" opacity="0.08" />
+          <line x1={X(rise)} x2={X(rise)} y1={P.t} y2={H - P.b} stroke="var(--watch)" strokeDasharray="3 3" />
+          <text x={X(rise) - 4} y={P.t + 10} textAnchor="end" style={{ fontSize: 9, fontWeight: 700, fill: 'var(--watch)' }}>first clear rise</text>
+        </>}
+        <path d={line} fill="none" stroke="var(--tx)" strokeWidth="1.6" strokeLinejoin="round" />
+        <circle cx={X(xMax)} cy={Y(ys[ys.length - 1])} r="3.5" fill="var(--crit)" />
+        <text x={X(xMax) - 6} y={Y(ys[ys.length - 1]) + 3} textAnchor="end" style={{ fontSize: 9, fontWeight: 700, fill: 'var(--crit)' }}>failed</text>
+        <line x1={P.l} x2={W - P.r} y1={H - P.b} y2={H - P.b} stroke="var(--line2)" />
+        {ticks.map((d) => (
+          <text key={d} x={X(d * 24)} y={H - 8} textAnchor="middle" style={{ fontSize: 9, fill: 'var(--tx2)' }}>day {d}</text>
+        ))}
+        <text x={4} y={P.t + 6} style={{ fontSize: 9, fill: 'var(--tx2)' }}>vibration</text>
+      </svg>
+      <p style={{ margin: '6px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>
+        "First clear rise" = vibration staying at least {data.rise_factor}× its normal level (our rule, applied to the real recordings).
+        Raksha's job is to catch that rise, so the repair can be planned instead of forced.
+      </p>
+      <span style={{ display: 'flex', marginTop: 6 }}>
+        <a href="https://data.nasa.gov/dataset/ims-bearings" target="_blank" rel="noreferrer"
+          title="IMS Bearing Data Set, Center for Intelligent Maintenance Systems, University of Cincinnati. NASA Prognostics Data Repository."
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '1px 7px', borderRadius: 999, border: '1px solid var(--line2)', fontSize: 10, fontWeight: 600, lineHeight: '15px', color: 'var(--tx2)', textDecoration: 'none', background: 'var(--panel)' }}>
+          <span aria-hidden="true">📄</span>NASA · IMS, University of Cincinnati
+        </a>
+      </span>
     </div>
   );
 }

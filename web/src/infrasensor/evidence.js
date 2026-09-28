@@ -30,6 +30,18 @@ export const SOURCES = {
     url: 'https://www.angi.com/articles/how-much-does-mold-remediation-service-cost.htm',
     archive: 'https://web.archive.org/web/20260816063026/https://www.angi.com/articles/how-much-does-mold-remediation-service-cost.htm',
   },
+  angiBlower: {
+    short: 'Angi cost guide · Apr 2025',
+    publisher: 'Angi', title: 'How Much Does a Blower Motor Replacement Cost?', updated: 'Apr 29, 2025',
+    url: 'https://www.angi.com/articles/furnace-blower-motor-cost.htm',
+    archive: 'https://web.archive.org/web/20251023045409/https://www.angi.com/articles/furnace-blower-motor-cost.htm',
+  },
+  angiCompressor: {
+    short: 'Angi cost guide · May 2025',
+    publisher: 'Angi', title: 'How Much Does an AC Compressor Cost?', updated: 'May 20, 2025',
+    url: 'https://www.angi.com/articles/ac-compressor-cost.htm',
+    archive: 'https://web.archive.org/web/20251002155359/https://www.angi.com/articles/ac-compressor-cost.htm',
+  },
   tripleI: {
     short: 'Triple-I · ISO/Verisk claims 2019–23',
     publisher: 'Insurance Information Institute (Triple-I), data from ISO/Verisk', title: 'Facts + Statistics: Homeowners and renters insurance',
@@ -64,6 +76,8 @@ export const FIGURES = {
   moldWindow: { src: 'epaMold', quote: 'It is important to dry water-damaged areas and items within 24-48 hours to prevent mold growth.' },
   leakWaste: { household: 9300, faucet: 3000, src: 'epaLeaks',
     quote: "The average household's leaks can account for more than 9,300 gallons of water wasted every year. A leaky faucet that drips at the rate of one drip per second can waste more than 3,000 gallons per year." },
+  blowerMotor: { avg: 560, src: 'angiBlower', quote: 'The average blower motor replacement cost is $560.' },
+  compressor: { avg: 1200, lo: 800, hi: 2300, src: 'angiCompressor', quote: 'The average cost for an AC compressor is $1,200, but you might pay between $800 and $2,300.' },
   preventive: { lo: 12, hi: 18, src: 'pnnlOM', quote: 'Preventive maintenance savings (vs reactive) can amount to as much as 12% to 18% on average.' },
   predictive: { lo: 8, hi: 12, src: 'pnnlOM', quote: 'A properly functioning predictive maintenance program can provide a savings of 8% to 12% over a program that utilizes preventive maintenance alone.' },
 };

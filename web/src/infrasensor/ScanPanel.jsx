@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import InfoCard, { InfoIcon } from './InfoCard';
 import { RESULTS, resultKey } from './glossary';
 import * as api from '../api';
-import { ConfidenceRing, CostLadder, Disclosure, FixEarlyCard } from './Infographics';
+import { CostLadder, DeteriorationChart, Disclosure, FixEarlyCard } from './Infographics';
+import wearCurve from './deterioration.json';
 
 export const TYPE_LABEL = { machine: 'Sound + vibration', sound: 'Microphone', bearing: 'Vibration spectrogram', thermal: 'Thermal camera',
   crack: 'Crack photo', strain_live: 'Strain gauge', crack_live: 'Crack gauge',
@@ -202,13 +203,16 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
       {result && open && (
         <div style={{ padding: '4px 12px 14px', borderTop: '1px solid var(--line)', animation: 'ns-enter 280ms ease both' }}>
           {/* 1. The answer at a glance */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '12px 0 10px' }}>
-            <ConfidenceRing p={result.confidence} color={tone} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: tone }}>{status}</div>
-              <div className="ns-serif" style={{ fontSize: 26, lineHeight: '30px', fontWeight: 500 }}>{pretty(result.name)}</div>
-              <div style={{ fontSize: 12, color: 'var(--tx2)' }}>{confWord(result.confidence)} · {TYPE_LABEL[type]}</div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: tone }}>{status}</span>
+            <span className="ns-num" style={{ fontSize: 13, color: 'var(--tx2)' }}>{TYPE_LABEL[type]} model</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '2px 0 8px' }}>
+            <span className="ns-serif" style={{ fontSize: 28, lineHeight: '34px', fontWeight: 500, flexGrow: 1 }}>{pretty(result.name)}</span>
+            <span style={{ textAlign: 'right' }}>
+              <span className="ns-num" style={{ display: 'block', fontSize: 28, fontWeight: 700, color: tone }}>{fmtPct(result.confidence)}</span>
+              <span style={{ fontSize: 11, color: 'var(--tx2)' }}>{confWord(result.confidence)}</span>
+            </span>
           </div>
           {explain(result.name) && (
             <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: '20px' }}>{explain(result.name).what.split('. ')[0].replace(/\.$/, '')}.</p>
@@ -239,6 +243,7 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
 
           {/* 3. Why it matters, with cited real-world figures */}
           {result.fault && result.label === 'pipe_leak' && <CostLadder />}
+          {result.fault && (type === 'bearing' || ['bearing_fault', 'unbalanced_rotor', 'misalignment'].includes(result.label)) && <DeteriorationChart data={wearCurve} />}
           {result.fault && result.label !== 'pipe_leak' && ['machine', 'bearing', 'thermal', 'sound'].includes(type) && <FixEarlyCard />}
 
           {/* 4. The detail, folded away */}
