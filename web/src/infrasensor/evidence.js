@@ -7,39 +7,47 @@ const CHECKED = '27 Sep 2026';
 
 export const SOURCES = {
   angiPipe: {
+    short: 'Angi cost guide · Nov 2025',
     publisher: 'Angi', title: 'How Much Do Pipe Leak Repairs Cost?', updated: 'Nov 25, 2025',
     url: 'https://www.angi.com/articles/cost-to-repair-leaking-pipe.htm',
     archive: 'https://web.archive.org/web/20251201140036/https://www.angi.com/articles/cost-to-repair-leaking-pipe.htm',
   },
   angiEmergency: {
+    short: 'Angi cost guide · Jul 2026',
     publisher: 'Angi', title: 'How Much Does an Emergency Plumber Cost?', updated: 'Jul 9, 2026',
     url: 'https://www.angi.com/articles/emergency-plumber-cost.htm',
     archive: 'https://web.archive.org/web/20260818021509/https://www.angi.com/articles/emergency-plumber-cost.htm',
   },
   angiWater: {
+    short: 'Angi 2026 data · 1,500 projects',
     publisher: 'Angi', title: 'How Much Does Water Damage Restoration Cost? [2026 Data]', updated: 'Sep 11, 2026',
     url: 'https://www.angi.com/articles/how-much-does-it-cost-repair-water-damage.htm',
     archive: 'https://web.archive.org/web/20260917025521/https://www.angi.com/articles/how-much-does-it-cost-repair-water-damage.htm',
   },
   angiMold: {
+    short: 'Angi cost guide · Jul 2026',
     publisher: 'Angi', title: 'How Much Does Mold Remediation Cost?', updated: 'Jul 9, 2026',
     url: 'https://www.angi.com/articles/how-much-does-mold-remediation-service-cost.htm',
     archive: 'https://web.archive.org/web/20260816063026/https://www.angi.com/articles/how-much-does-mold-remediation-service-cost.htm',
   },
   tripleI: {
+    short: 'Triple-I · ISO/Verisk claims 2019–23',
     publisher: 'Insurance Information Institute (Triple-I), data from ISO/Verisk', title: 'Facts + Statistics: Homeowners and renters insurance',
     updated: 'Average homeowners losses, 2019–2023',
     url: 'https://www.iii.org/fact-statistic/facts-statistics-homeowners-and-renters-insurance',
   },
   epaMold: {
+    short: 'US EPA',
     publisher: 'US EPA', title: 'A Brief Guide to Mold, Moisture and Your Home',
     url: 'https://www.epa.gov/mold/brief-guide-mold-moisture-and-your-home',
   },
   epaLeaks: {
+    short: 'US EPA WaterSense',
     publisher: 'US EPA WaterSense', title: 'Fix a Leak Week',
     url: 'https://www.epa.gov/watersense/fix-leak-week',
   },
   pnnlOM: {
+    short: 'US DOE / PNNL',
     publisher: 'Pacific Northwest National Laboratory, citing the US DOE FEMP O&M Best Practices Guide',
     title: 'O&M Best Practices: Maintenance Approaches',
     url: 'https://www.pnnl.gov/projects/om-best-practices/maintenance-approaches',

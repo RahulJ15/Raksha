@@ -7,14 +7,31 @@ import { CHECKED_ON, FIGURES, SOURCES, usd } from './evidence';
 const card = { marginBottom: 12, padding: 14, borderRadius: 18, border: '1.5px solid var(--line)', background: 'var(--panel)' };
 const kicker = { fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--tx2)' };
 
-function Cite({ ids }) {
+// Visible source tag(s) for a figure: the organisation and date, linking to the page it came from.
+function Cite({ ids, block = false }) {
+  const srcIds = [...new Set(ids.map((id) => FIGURES[id].src))];
   return (
-    <sup style={{ fontSize: 9, marginLeft: 2 }}>
-      {ids.filter((id, i) => ids.findIndex((j) => FIGURES[j].src === FIGURES[id].src) === i).map((id) => (
-        <a key={id} href={SOURCES[FIGURES[id].src].url} target="_blank" rel="noreferrer" title={FIGURES[id].quote}
-          style={{ color: 'var(--acc)', textDecoration: 'none', marginLeft: 1 }}>[{Object.keys(SOURCES).indexOf(FIGURES[id].src) + 1}]</a>
+    <span style={{ display: block ? 'flex' : 'inline-flex', flexWrap: 'wrap', gap: 4, marginLeft: block ? 0 : 6, marginTop: block ? 4 : 0, verticalAlign: 'middle' }}>
+      {srcIds.map((sid) => (
+        <a key={sid} href={SOURCES[sid].url} target="_blank" rel="noreferrer"
+          title={ids.filter((id) => FIGURES[id].src === sid).map((id) => `“${FIGURES[id].quote}”`).join('\n')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '1px 7px', borderRadius: 999, border: '1px solid var(--line2)',
+            fontSize: 10, fontWeight: 600, lineHeight: '15px', color: 'var(--tx2)', textDecoration: 'none', whiteSpace: 'nowrap', background: 'var(--panel)' }}>
+          <span aria-hidden="true">📄</span>{SOURCES[sid].short}
+        </a>
       ))}
-    </sup>
+    </span>
+  );
+}
+
+// Always-visible strip naming every organisation behind a card.
+function DataFrom({ ids }) {
+  const pubs = [...new Set(ids.map((id) => SOURCES[FIGURES[id].src].short.split(' ·')[0].replace(' 2026 data', ' cost guide').replace(' WaterSense', '')))];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 12, padding: '8px 10px', borderRadius: 12, background: 'var(--panel2)' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)' }}>✓ Real data from</span>
+      {pubs.map((p) => <span key={p} style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx)' }}>{p}</span>).reduce((a, el, i) => (i ? [...a, <span key={`s${i}`} style={{ color: 'var(--line2)' }}>·</span>, el] : [el]), [])}
+    </div>
   );
 }
 
@@ -24,7 +41,7 @@ export function Sources({ ids }) {
   return (
     <div style={{ marginTop: 10 }}>
       <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)} style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)' }}>
-        {open ? 'Hide sources' : `Sources (${srcIds.length})`} ·<span style={{ fontWeight: 500 }}> checked {CHECKED_ON}</span>
+        {open ? 'Hide full sources' : `Full sources and exact quotes (${srcIds.length})`} ·<span style={{ fontWeight: 500 }}> checked {CHECKED_ON}</span>
       </button>
       {open && (
         <ol style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 11, lineHeight: '16px', color: 'var(--tx2)' }}>
@@ -67,22 +84,24 @@ export function CostLadder() {
       {rows.map((r, i) => (
         <div key={r.title} style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: '2px 10px', alignItems: 'center', marginBottom: 10 }}>
           <span aria-hidden="true" style={{ fontSize: 18, textAlign: 'center' }}>{r.icon}</span>
-          <span style={{ fontSize: 13, fontWeight: 700 }}>{i + 1}. {r.title}<Cite ids={r.ids} /></span>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{i + 1}. {r.title}</span>
           <span className="ns-num" style={{ fontSize: 15, fontWeight: 700, color: i === 0 ? 'var(--ok)' : i === 1 ? 'var(--watch)' : 'var(--crit)' }}>{usd(r.total)}</span>
           <span />
           <span style={{ gridColumn: '2 / 4', height: 8, borderRadius: 4, background: 'var(--panel2)', overflow: 'hidden' }}>
             <span style={{ display: 'block', height: '100%', width: `${Math.max(3, (r.total / max) * 100)}%`, borderRadius: 4, background: i === 0 ? 'var(--ok)' : i === 1 ? 'var(--watch)' : 'var(--crit)' }} />
           </span>
           <span />
-          <span style={{ gridColumn: '2 / 4', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>{r.body}</span>
+          <span style={{ gridColumn: '2 / 4', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>{r.body}<Cite ids={r.ids} block /></span>
         </div>
       ))}
       <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: '2px 10px', alignItems: 'center', paddingTop: 8, borderTop: '1px dashed var(--line2)' }}>
         <span aria-hidden="true" style={{ fontSize: 18, textAlign: 'center' }}>🏠</span>
-        <span style={{ fontSize: 13, fontWeight: 700 }}>Average water-damage insurance claim<Cite ids={['claim']} /></span>
+        <span style={{ fontSize: 13, fontWeight: 700 }}>Average water-damage insurance claim</span>
         <span className="ns-num" style={{ fontSize: 15, fontWeight: 700, color: 'var(--crit)' }}>{usd(F.claim.avg)}</span>
         <span />
         <span style={{ gridColumn: '2 / 4', height: 8, borderRadius: 4, background: 'var(--crit)' }} />
+        <span />
+        <span style={{ gridColumn: '2 / 4', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>Average US homeowners claim for water damage<Cite ids={['claim']} block /></span>
       </div>
       <p style={{ margin: '10px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>
         💧 Even a slow drip adds up: one drip per second wastes over {F.leakWaste.faucet.toLocaleString('en-US')} gallons a year.<Cite ids={['leakWaste']} />
@@ -91,6 +110,7 @@ export function CostLadder() {
         US national averages. The running total adds the averages above; the real cost depends on where the water goes and local prices.
         An emergency call-out costs {F.emergency.lo}–{F.emergency.hi}× the normal rate.<Cite ids={['emergency']} />
       </p>
+      <DataFrom ids={['pipeRepair', 'drywall', 'restoration', 'mold', 'claim', 'moldWindow', 'leakWaste']} />
       <Sources ids={['pipeRepair', 'emergency', 'drywall', 'restoration', 'mold', 'moldWindow', 'claim', 'leakWaste']} />
     </div>
   );
@@ -115,9 +135,10 @@ export function FixEarlyCard() {
         <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--ok)', color: 'var(--tagTx)' }}>Sensor-predicted</span>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        {tile(`${F.preventive.lo}–${F.preventive.hi}%`, <>cheaper with planned maintenance than waiting for breakdowns<Cite ids={['preventive']} /></>, 'var(--watch)')}
-        {tile(`+${F.predictive.lo}–${F.predictive.hi}%`, <>more saved when sensors predict the fault, like this scan<Cite ids={['predictive']} /></>, 'var(--ok)')}
+        {tile(`${F.preventive.lo}–${F.preventive.hi}%`, <>cheaper with planned maintenance than waiting for breakdowns<Cite ids={['preventive']} block /></>, 'var(--watch)')}
+        {tile(`+${F.predictive.lo}–${F.predictive.hi}%`, <>more saved when sensors predict the fault, like this scan<Cite ids={['predictive']} block /></>, 'var(--ok)')}
       </div>
+      <DataFrom ids={['preventive']} />
       <Sources ids={['preventive', 'predictive']} />
     </div>
   );
