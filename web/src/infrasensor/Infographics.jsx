@@ -4,6 +4,25 @@ import { CHECKED_ON, FIGURES, SOURCES, usd } from './evidence';
 // Visual pieces for the scan result. Every number comes from evidence.js (cited, re-checked); the only
 // arithmetic done here is adding cited averages into a running total, and it is labelled as such.
 
+export const ICONS = {
+  wrench: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z',
+  drop: 'M12 3.5c3.2 4.2 5.5 7.1 5.5 10a5.5 5.5 0 0 1-11 0c0-2.9 2.3-5.8 5.5-10z',
+  alert: 'M12 4.5 20.5 19h-17zM12 10v4M12 16.8h.01',
+  house: 'M3 20h18M5 20V10M19 20V10M3 10l9-6 9 6M9.5 20v-6h5v6',
+  doc: 'M6 3.5h9l3 3V20.5H6zM9 11h6M9 15h4',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  clock: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+  person: 'M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20a7 7 0 0 1 14 0',
+};
+
+export function LineIcon({ name, size = 16, color = 'currentColor', style }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ color, flexShrink: 0, ...style }}>
+      <path className="ns-ic" d={ICONS[name]} />
+    </svg>
+  );
+}
+
 const card = { marginBottom: 12, padding: 14, borderRadius: 18, border: '1.5px solid var(--line)', background: 'var(--panel)' };
 const kicker = { fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--tx2)' };
 
@@ -17,7 +36,7 @@ function Cite({ ids, block = false }) {
           title={ids.filter((id) => FIGURES[id].src === sid).map((id) => `“${FIGURES[id].quote}”`).join('\n')}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '1px 7px', borderRadius: 999, border: '1px solid var(--line2)',
             fontSize: 10, fontWeight: 600, lineHeight: '15px', color: 'var(--tx2)', textDecoration: 'none', whiteSpace: 'nowrap', background: 'var(--panel)' }}>
-          <span aria-hidden="true">📄</span>{SOURCES[sid].short}
+          <LineIcon name="doc" size={11} />{SOURCES[sid].short}
         </a>
       ))}
     </span>
@@ -29,7 +48,7 @@ function DataFrom({ ids }) {
   const pubs = [...new Set(ids.map((id) => SOURCES[FIGURES[id].src].short.split(' ·')[0].replace(' 2026 data', ' cost guide').replace(' WaterSense', '')))];
   return (
     <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 12, padding: '8px 10px', borderRadius: 12, background: 'var(--panel2)' }}>
-      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx2)' }}>✓ Real data from</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: 'var(--tx2)' }}><LineIcon name="check" size={13} color="var(--ok)" />Real data from</span>
       {pubs.map((p) => <span key={p} style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx)' }}>{p}</span>).reduce((a, el, i) => (i ? [...a, <span key={`s${i}`} style={{ color: 'var(--line2)' }}>·</span>, el] : [el]), [])}
     </div>
   );
@@ -68,9 +87,9 @@ export function Sources({ ids }) {
 export function CostLadder() {
   const F = FIGURES;
   const steps = [
-    { icon: '🔧', title: 'Fix the leak now', body: `Repair only${' '}(typical range ${usd(F.pipeRepair.lo)}–${usd(F.pipeRepair.hi)})`, add: F.pipeRepair.avg, ids: ['pipeRepair'] },
-    { icon: '💧', title: 'Water soaks the wall', body: `+ drywall ${usd(F.drywall.avg)} + water-damage cleanup ${usd(F.restoration.avg)}`, add: F.drywall.avg + F.restoration.avg, ids: ['drywall', 'restoration'] },
-    { icon: '🍄', title: 'Mold sets in', body: `+ mold removal ${usd(F.mold.avg)}. Mold can start if things aren't dried within 24–48 h`, add: F.mold.avg, ids: ['mold', 'moldWindow'] },
+    { icon: 'wrench', title: 'Fix the leak now', body: `Repair only${' '}(typical range ${usd(F.pipeRepair.lo)}–${usd(F.pipeRepair.hi)})`, add: F.pipeRepair.avg, ids: ['pipeRepair'] },
+    { icon: 'drop', title: 'Water soaks the wall', body: `+ drywall ${usd(F.drywall.avg)} + water-damage cleanup ${usd(F.restoration.avg)}`, add: F.drywall.avg + F.restoration.avg, ids: ['drywall', 'restoration'] },
+    { icon: 'alert', title: 'Mold sets in', body: `+ mold removal ${usd(F.mold.avg)}. Mold can start if things aren't dried within 24–48 h`, add: F.mold.avg, ids: ['mold', 'moldWindow'] },
   ];
   let run = 0;
   const rows = steps.map((s) => ({ ...s, total: (run += s.add) }));
@@ -83,7 +102,7 @@ export function CostLadder() {
       </div>
       {rows.map((r, i) => (
         <div key={r.title} style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: '2px 10px', alignItems: 'center', marginBottom: 10 }}>
-          <span aria-hidden="true" style={{ fontSize: 18, textAlign: 'center' }}>{r.icon}</span>
+          <span style={{ display: 'flex', justifyContent: 'center' }}><LineIcon name={r.icon} size={20} color={i === 0 ? 'var(--ok)' : i === 1 ? 'var(--watch)' : 'var(--crit)'} /></span>
           <span style={{ fontSize: 13, fontWeight: 700 }}>{i + 1}. {r.title}</span>
           <span className="ns-num" style={{ fontSize: 15, fontWeight: 700, color: i === 0 ? 'var(--ok)' : i === 1 ? 'var(--watch)' : 'var(--crit)' }}>{usd(r.total)}</span>
           <span />
@@ -95,7 +114,7 @@ export function CostLadder() {
         </div>
       ))}
       <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: '2px 10px', alignItems: 'center', paddingTop: 8, borderTop: '1px dashed var(--line2)' }}>
-        <span aria-hidden="true" style={{ fontSize: 18, textAlign: 'center' }}>🏠</span>
+        <span style={{ display: 'flex', justifyContent: 'center' }}><LineIcon name="house" size={20} color="var(--crit)" /></span>
         <span style={{ fontSize: 13, fontWeight: 700 }}>Average water-damage insurance claim</span>
         <span className="ns-num" style={{ fontSize: 15, fontWeight: 700, color: 'var(--crit)' }}>{usd(F.claim.avg)}</span>
         <span />
@@ -104,7 +123,7 @@ export function CostLadder() {
         <span style={{ gridColumn: '2 / 4', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>Average US homeowners claim for water damage<Cite ids={['claim']} block /></span>
       </div>
       <p style={{ margin: '10px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>
-        💧 Even a slow drip adds up: one drip per second wastes over {F.leakWaste.faucet.toLocaleString('en-US')} gallons a year.<Cite ids={['leakWaste']} />
+        Even a slow drip adds up: one drip per second wastes over {F.leakWaste.faucet.toLocaleString('en-US')} gallons a year.<Cite ids={['leakWaste']} />
       </p>
       <p style={{ margin: '6px 0 0', fontSize: 11, lineHeight: '15px', color: 'var(--tx2)' }}>
         US national averages. The running total adds the averages above; the real cost depends on where the water goes and local prices.
@@ -242,7 +261,7 @@ export function DeteriorationChart({ data }) {
         <a href="https://data.nasa.gov/dataset/ims-bearings" target="_blank" rel="noreferrer"
           title="IMS Bearing Data Set, Center for Intelligent Maintenance Systems, University of Cincinnati. NASA Prognostics Data Repository."
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '1px 7px', borderRadius: 999, border: '1px solid var(--line2)', fontSize: 10, fontWeight: 600, lineHeight: '15px', color: 'var(--tx2)', textDecoration: 'none', background: 'var(--panel)' }}>
-          <span aria-hidden="true">📄</span>NASA · IMS, University of Cincinnati
+          <LineIcon name="doc" size={11} />NASA · IMS, University of Cincinnati
         </a>
       </span>
     </div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import InfoCard, { InfoIcon } from './InfoCard';
 import { RESULTS, resultKey } from './glossary';
 import * as api from '../api';
-import { CostLadder, DeteriorationChart, Disclosure, FixEarlyCard } from './Infographics';
+import { CostLadder, DeteriorationChart, Disclosure, FixEarlyCard, LineIcon } from './Infographics';
 import wearCurve from './deterioration.json';
 
 export const TYPE_LABEL = { machine: 'Sound + vibration', sound: 'Microphone', bearing: 'Vibration spectrogram', thermal: 'Thermal camera',
@@ -219,15 +219,15 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
           )}
           {result.early_warning && (
             <p style={{ margin: '0 0 10px', padding: '8px 10px', borderRadius: 12, background: 'var(--panel2)', fontSize: 12, lineHeight: '17px' }}>
-              ⚠︎ Early warning: the model leans healthy ({fmtPct(result.probs.healthy)}) but isn't sure, so check it on the next visit.
+              <LineIcon name="alert" size={14} color="var(--watch)" style={{ verticalAlign: '-2px', marginRight: 4 }} />Early warning: the model leans healthy ({fmtPct(result.probs.healthy)}) but isn't sure, so check it on the next visit.
             </p>
           )}
 
           {/* 2. What to do next, as chips (from the AI explanation once it arrives) */}
           {verdict && !verdictBusy && result.fault && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-              <span style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--panel2)', fontSize: 12 }}>⏱ <strong>{verdict.urgency}</strong></span>
-              <span style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--panel2)', fontSize: 12 }}>👷 <strong>{verdict.who}</strong></span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: 'var(--panel2)', fontSize: 12 }}><LineIcon name="clock" size={14} /><strong>{verdict.urgency}</strong></span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: 'var(--panel2)', fontSize: 12 }}><LineIcon name="person" size={14} /><strong>{verdict.who}</strong></span>
             </div>
           )}
 
@@ -584,7 +584,7 @@ function SampleGallery({ samples, picked, onPick, onScenario }) {
                   {src ? <img src={src} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10, display: 'block' }} />
                     : <span style={{ display: 'block', width: '100%', aspectRatio: '1', borderRadius: 10, background: 'var(--panel2)' }} />}
                   <span style={{ display: 'block', fontSize: 13, fontWeight: 700, marginTop: 6, lineHeight: '16px' }}>{d.title}</span>
-                  <span style={{ display: 'block', fontSize: 11, color: 'var(--tx2)', marginTop: 2 }}>{added ? '✓ Added' : `True answer: ${d.truth}`}</span>
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--tx2)', marginTop: 2 }}>{added ? 'Added' : `True answer: ${d.truth}`}</span>
                 </button>
               );
             })}
