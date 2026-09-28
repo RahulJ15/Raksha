@@ -88,7 +88,11 @@ small problems become expensive ones, and tells a non-technical contractor exact
 **Machines**
 - Replacing a worn fan / blower motor: **$560** on average. *Angi*
 - Replacing an AC compressor: **$1,200** on average ($800–$2,300). *Angi, May 2025*
-- Don't imply a failing fan motor *causes* compressor failure; no cited source says so. Show them as typical bills.
+- Worst case, replacing the whole AC unit: **$5,989** on average ($1,447–$12,500). *Angi, Dec 2025*. Always
+  present it as "worst case", never as what will happen.
+- Emergency (after-hours) HVAC repairs: **$40–$80 more per hour**. *Angi HVAC repair guide, Aug 2026*
+- Machine headline you may use: **"Fix now: ~$560. Worst case: ~$5,989."**
+- Don't imply a failing fan motor *causes* compressor failure; no cited source says so.
 - Planned maintenance saves **12–18%** versus waiting for breakdowns, and sensor-predicted maintenance saves a
   further **8–12%**. *US DOE FEMP guide, via PNNL*
 

@@ -254,8 +254,8 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
 
           {/* 4. Why it matters, with cited real-world figures */}
           {result.fault && result.label === 'pipe_leak' && <CostLadder />}
-          {result.fault && (type === 'bearing' || ['bearing_fault', 'unbalanced_rotor', 'misalignment'].includes(result.label)) && <DeteriorationChart data={wearCurve} />}
           {result.fault && result.label !== 'pipe_leak' && ['machine', 'bearing', 'thermal', 'sound'].includes(type) && <FixEarlyCard />}
+          {result.fault && (type === 'bearing' || ['bearing_fault', 'unbalanced_rotor', 'misalignment'].includes(result.label)) && <DeteriorationChart data={wearCurve} />}
 
           {/* 4. The detail, folded away */}
           <Disclosure title="What this means" summary={explain(result.name) ? `Check first: ${explain(result.name).check.split('. ')[0].replace(/\.$/, '')}` : ''}>

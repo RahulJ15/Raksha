@@ -135,23 +135,42 @@ export function CostLadder() {
   );
 }
 
-// Machines: the one repair bill that matters, and one plain fact about planning it.
+// Machines: what fixing it now costs vs the cost of letting it break, as a simple bar graph.
 export function FixEarlyCard() {
   const F = FIGURES;
+  const max = F.acReplace.avg;
+  const bars = [
+    { label: 'Fix it now', sub: 'planned motor replacement', value: F.blowerMotor.avg, color: 'var(--ok)', ids: ['blowerMotor'] },
+    { label: 'Worst case: let it break', sub: `the whole AC unit has to be replaced (typically ${usd(F.acReplace.lo)}–${usd(F.acReplace.hi)})`, value: F.acReplace.avg, color: 'var(--crit)', ids: ['acReplace'] },
+  ];
   return (
     <div style={card}>
       <div style={kicker}>Why fix it now</div>
-      <div style={{ marginTop: 6 }}>
-        <div className="ns-num" style={{ fontSize: 32, lineHeight: '38px', fontWeight: 700, color: 'var(--ok)', whiteSpace: 'nowrap' }}>~{usd(F.blowerMotor.avg)}</div>
-        <div style={{ fontSize: 14, lineHeight: '19px' }}>typical cost to replace a worn motor now</div>
-        <Cite ids={['blowerMotor']} block />
+      <div className="ns-serif" style={{ fontSize: 20, lineHeight: '26px', fontWeight: 500, margin: '2px 0 12px' }}>
+        Fix now: <span style={{ color: 'var(--ok)' }}>~{usd(F.blowerMotor.avg)}</span> · Worst case: <span style={{ color: 'var(--crit)' }}>~{usd(F.acReplace.avg)}</span>
       </div>
-      <div style={{ marginTop: 14 }}>
-        <div className="ns-num" style={{ fontSize: 32, lineHeight: '38px', fontWeight: 700, color: 'var(--watch)', whiteSpace: 'nowrap' }}>{F.preventive.lo}–{F.preventive.hi}% cheaper</div>
-        <div style={{ fontSize: 14, lineHeight: '19px' }}>when repairs are planned, instead of waiting for it to break</div>
-        <Cite ids={['preventive']} block />
+      {bars.map((r) => (
+        <div key={r.label} style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>{r.label}</span>
+            <span className="ns-num" style={{ fontSize: 18, fontWeight: 700, color: r.color }}>{usd(r.value)}</span>
+          </div>
+          <span style={{ display: 'block', height: 14, margin: '5px 0 3px', borderRadius: 7, background: 'var(--panel2)', overflow: 'hidden' }}>
+            <span style={{ display: 'block', height: '100%', width: `${Math.max(4, (r.value / max) * 100)}%`, borderRadius: 7, background: r.color }} />
+          </span>
+          <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--tx2)' }}>{r.sub}</span>
+          <Cite ids={r.ids} block />
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 12px', borderRadius: 12, background: 'var(--panel2)', fontSize: 13, lineHeight: '18px' }}>
+        <LineIcon name="clock" size={16} color="var(--watch)" style={{ marginTop: 1 }} />
+        <span>If it breaks after hours, emergency repairs cost <strong>${F.hvacEmergency.lo}–${F.hvacEmergency.hi} more per hour</strong>.<Cite ids={['hvacEmergency']} block /></span>
       </div>
-      <Sources ids={['blowerMotor', 'preventive']} />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 12px', marginTop: 8, borderRadius: 12, background: 'var(--panel2)', fontSize: 13, lineHeight: '18px' }}>
+        <LineIcon name="check" size={16} color="var(--ok)" style={{ marginTop: 1 }} />
+        <span>Planned repairs are <strong>{F.preventive.lo}–{F.preventive.hi}% cheaper</strong> than waiting for breakdowns.<Cite ids={['preventive']} block /></span>
+      </div>
+      <Sources ids={['blowerMotor', 'acReplace', 'hvacEmergency', 'preventive']} />
     </div>
   );
 }

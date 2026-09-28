@@ -42,6 +42,18 @@ export const SOURCES = {
     url: 'https://www.angi.com/articles/ac-compressor-cost.htm',
     archive: 'https://web.archive.org/web/20251002155359/https://www.angi.com/articles/ac-compressor-cost.htm',
   },
+  angiHvacRepair: {
+    short: 'Angi HVAC repair guide · Aug 2026',
+    publisher: 'Angi', title: '2026 HVAC Repairs Cost: A Comprehensive Price Guide', updated: 'Aug 4, 2026',
+    url: 'https://www.angi.com/articles/how-much-hvac-repair-cost.htm',
+    archive: 'https://web.archive.org/web/20260814115206/https://www.angi.com/articles/how-much-hvac-repair-cost.htm',
+  },
+  angiAcReplace: {
+    short: 'Angi cost guide · Dec 2025',
+    publisher: 'Angi', title: 'How Much Does AC Replacement Cost? [2026 Data]', updated: 'Dec 16, 2025',
+    url: 'https://www.angi.com/articles/how-much-does-installing-new-ac-cost.htm',
+    archive: 'https://web.archive.org/web/20260225092904/https://www.angi.com/articles/how-much-does-installing-new-ac-cost.htm',
+  },
   tripleI: {
     short: 'Triple-I · ISO/Verisk claims 2019–23',
     publisher: 'Insurance Information Institute (Triple-I), data from ISO/Verisk', title: 'Facts + Statistics: Homeowners and renters insurance',
@@ -78,6 +90,10 @@ export const FIGURES = {
     quote: "The average household's leaks can account for more than 9,300 gallons of water wasted every year. A leaky faucet that drips at the rate of one drip per second can waste more than 3,000 gallons per year." },
   blowerMotor: { avg: 560, src: 'angiBlower', quote: 'The average blower motor replacement cost is $560.' },
   compressor: { avg: 1200, lo: 800, hi: 2300, src: 'angiCompressor', quote: 'The average cost for an AC compressor is $1,200, but you might pay between $800 and $2,300.' },
+  hvacEmergency: { lo: 40, hi: 80, src: 'angiHvacRepair',
+    quote: 'Emergency repairs—which are made after typical business hours—generally cost more than scheduled repairs. The exact price depends on the problem, but an HVAC tech may charge an additional $40 to $80 per hour for this type of work.' },
+  acReplace: { avg: 5989, lo: 1447, hi: 12500, src: 'angiAcReplace',
+    quote: 'AC unit replacement costs $5,989 on average … the price could range from $1,447 to $12,500.' },
   preventive: { lo: 12, hi: 18, src: 'pnnlOM', quote: 'Preventive maintenance savings (vs reactive) can amount to as much as 12% to 18% on average.' },
   predictive: { lo: 8, hi: 12, src: 'pnnlOM', quote: 'A properly functioning predictive maintenance program can provide a savings of 8% to 12% over a program that utilizes preventive maintenance alone.' },
 };
