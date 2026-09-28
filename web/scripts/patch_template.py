@@ -14,11 +14,11 @@ def once(old: str, new: str) -> None:
     s = s.replace(old, new)
 
 
-log_btn = """          Log
+site_btn = """          Site
         </span>
       </button>
 """
-once(log_btn, log_btn + """      <button className="ns-btn ns-rail" aria-label="Upload scan" onClick={v.openScan} style={css(`width: 44px; height: 52px; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: ${v.railScanFg}`)}>
+once(site_btn, site_btn + """      <button className="ns-btn ns-rail" aria-label="Upload scan" onClick={v.openScan} style={css(`width: 44px; height: 52px; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: ${v.railScanFg}`)}>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path className="ns-ic" d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 14.5v4a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-4">
           </path>
@@ -39,7 +39,22 @@ why = """            Why it matters
 once(why, why + "        {v.infoCard}\n")
 
 end = s.rindex("</div>\n  </>);")
-s = s[:end] + "  {v.scanPanel}\n" + s[end:]
+s = s[:end] + "  {v.scanPanel}\n  {v.tour}\n" + s[end:]
+
+# No accounts in the demo: the old "Log in" link becomes a way straight to the dashboard.
+once("""              I already have an account ·{' '}
+              <span style={css("color: var(--tx); text-decoration: underline; text-underline-offset: 3px")}>
+                Log in
+              </span>""", """              Skip setup ·{' '}
+              <span style={css("color: var(--tx); text-decoration: underline; text-underline-offset: 3px")}>
+                Go to the dashboard
+              </span>""")
+
+# Walkthrough target
+once("""        <section style={css("margin-top: 10px")}>
+          <div style={css("padding: 6px 16px 2px 6px; display: flex; align-items: center; gap: 10px")}>""",
+     """        <section data-tour="attention" style={css("margin-top: 10px")}>
+          <div style={css("padding: 6px 16px 2px 6px; display: flex; align-items: center; gap: 10px")}>""")
 
 # Class hooks for the desktop layout (see src/index.css).
 once('''<div style={css("flex-grow: 1; min-height: 0; position: relative; overflow: hidden; background: var(--map); border-top: 1px solid var(--line)")}>''',

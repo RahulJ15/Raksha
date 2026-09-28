@@ -3,6 +3,7 @@ import { Component } from 'react';
 import renderTemplate from './template';
 import ScanPanel from './ScanPanel';
 import InfoCard from './InfoCard';
+import Tour from './Tour';
 import { MEASUREMENTS } from './glossary';
 
 export default class Main extends Component {
@@ -18,14 +19,14 @@ export default class Main extends Component {
       toastText: '', toastOn: false, cat: 'all', catFlip: false, healthInfo: false,
       tickets: { 'VB-R2': { tech: 'marcus', ago: 140, status: 'progress' }, 'PR-B1': { tech: 'priya', ago: 1800, status: 'progress' }, 'MS-DN': { tech: 'dana', ago: 120, status: 'progress' } },
       resolved: [
-        { zone: 'Vent 3', text: 'humidity back to normal after the curb was resealed', by: 'Dana Ortiz', when: 'Yesterday 16:12' },
-        { zone: 'Riser B', text: 'leak noise stopped after the joint was replaced', by: 'Priya Nair', when: '24 Sep 10:02' },
-        { zone: 'Pump P-2', text: 'vibration back to baseline after realignment', by: 'Marcus Hill', when: '23 Sep 15:40' }
+        { zone: 'Roof vent 3', text: 'humidity back to normal after the curb was resealed', by: 'Dana Ortiz', when: 'Yesterday 16:12' },
+        { zone: 'Water pipe B', text: 'leak noise stopped after the joint was replaced', by: 'Priya Nair', when: '24 Sep 10:02' },
+        { zone: 'Water pump', text: 'vibration back to baseline after realignment', by: 'Marcus Hill', when: '23 Sep 15:40' }
       ],
       logExtra: [], logDate: 'week', logType: 'all', logAsset: 'all',
       attnOpen: true, attnAll: false, healthyOpen: false, resolvedOpen: false, othersOpen: false,
       chatOpen: false, chatY: 1, chatDraft: '', chatTyping: false,
-      chatMsgs: [{ from: 'bot', text: 'Hi. I can see every sensor, ticket and technician at Northside Annex. Ask me something like "What is wrong with Vent 6?" or "Who should fix RTU-2?"' }],
+      chatMsgs: [{ from: 'bot', text: 'Hi. I can see every sensor, ticket and technician at Northside Annex. Ask me something like "What is wrong with Roof vent 6?" or "Who should fix Rooftop AC 2?"' }],
       bpStage: 'camera', bpEdges: false, bpP: 0, pinP: 0, yaw: 28, pitch: 56, ucard: 0, sheetMin: false, navDir: 1, chatCtx: { sensor: null, tech: null },
       introIdx: 0, introTouched: false, authMode: 'signup', authName: '', authEmail: '', authPass: '', diagStep: 0, diagDir: 1, diagFlip: false,
       dg: { watch: [], where: [], floors: 4, area: null, speed: null, respond: [], teamSize: 3, control: [], trouble: [] }, kit: null,
@@ -338,24 +339,24 @@ export default class Main extends Component {
       'TH-V5': 'T-1033', 'AL-H3': 'T-1031', 'SG-P2': 'T-1027', 'TH-EL': 'T-1036', 'EV-E1': 'T-1035', 'CR-PS': 'T-1024', 'PR-V7': 'T-1021' };
     const L = (day, t, type, text, source, asset) => ({ day, t, type, text, source, asset });
     const LOG = [
-      L('Today', '14:16', 'alert', 'Alert fired: humidity 94 %RH at Vent 6', 'Sensor RH-V6', 'Vent 6'),
-      L('Today', '14:16', 'ticket', 'Ticket T-1042 opened for Vent 6', 'System', 'Vent 6'),
-      L('Today', '14:15', 'escalation', 'Escalation: text sent to Marcus Hill and the facilities lead for T-1037', 'Escalation service', 'RTU-2'),
-      L('Today', '14:11', 'alert', 'Alert fired: leak noise 44 dB at Riser A', 'Sensor AL-RA', 'Riser A'),
-      L('Today', '14:11', 'ticket', 'Ticket T-1041 opened for Riser A', 'System', 'Riser A'),
-      L('Today', '14:00', 'escalation', 'T-1037 passed its 2 h resolution window and is now overdue', 'Escalation service', 'RTU-2'),
-      L('Today', '13:40', 'alert', 'Alert fired: sprinkler pressure 52 psi at Sprinkler riser', 'Sensor SR-L1', 'Sprinkler riser'),
-      L('Today', '13:40', 'ticket', 'Ticket T-1040 opened for Sprinkler riser', 'System', 'Sprinkler riser'),
-      L('Today', '12:20', 'escalation', 'Escalation: text sent to Priya Nair for T-1029', 'Escalation service', 'Boiler B-1'),
-      L('Today', '12:20', 'assign', 'T-1039 assigned to Dana Ortiz', 'J. Reyes, facilities manager', 'Drain N'),
-      L('Today', '12:00', 'assign', 'T-1037 assigned to Marcus Hill', 'J. Reyes, facilities manager', 'RTU-2'),
-      L('Today', '11:20', 'alert', 'Alert fired: vibration 7.9 mm/s at RTU-2', 'Sensor VB-R2', 'RTU-2'),
-      L('Today', '11:20', 'ticket', 'Ticket T-1037 opened for RTU-2', 'System', 'RTU-2'),
-      L('Yesterday', '16:12', 'resolved', 'T-1025 resolved: Vent 3 humidity back to normal', 'Dana Ortiz', 'Vent 3'),
-      L('Yesterday', '08:20', 'assign', 'T-1029 assigned to Priya Nair', 'J. Reyes, facilities manager', 'Boiler B-1'),
-      L('24 Sep', '10:02', 'resolved', 'T-1019 resolved: Riser B leak noise stopped', 'Priya Nair', 'Riser B'),
-      L('23 Sep', '17:40', 'offline', 'Sensor PR-V7 stopped reporting', 'Sensor PR-V7', 'Valve pit V-7'),
-      L('23 Sep', '15:40', 'resolved', 'T-1016 resolved: Pump P-2 vibration back to baseline', 'Marcus Hill', 'Pump P-2'),
+      L('Today', '14:16', 'alert', 'Alert fired: humidity 94 %RH at Roof vent 6', 'Sensor RH-V6', 'Roof vent 6'),
+      L('Today', '14:16', 'ticket', 'Ticket T-1042 opened for Roof vent 6', 'System', 'Roof vent 6'),
+      L('Today', '14:15', 'escalation', 'Escalation: text sent to Marcus Hill and the facilities lead for T-1037', 'Escalation service', 'Rooftop AC 2'),
+      L('Today', '14:11', 'alert', 'Alert fired: leak noise 44 dB at Water pipe A', 'Sensor AL-RA', 'Water pipe A'),
+      L('Today', '14:11', 'ticket', 'Ticket T-1041 opened for Water pipe A', 'System', 'Water pipe A'),
+      L('Today', '14:00', 'escalation', 'T-1037 passed its 2 h resolution window and is now overdue', 'Escalation service', 'Rooftop AC 2'),
+      L('Today', '13:40', 'alert', 'Alert fired: sprinkler pressure 52 psi at Fire sprinkler pipe', 'Sensor SR-L1', 'Fire sprinkler pipe'),
+      L('Today', '13:40', 'ticket', 'Ticket T-1040 opened for Fire sprinkler pipe', 'System', 'Fire sprinkler pipe'),
+      L('Today', '12:20', 'escalation', 'Escalation: text sent to Priya Nair for T-1029', 'Escalation service', 'Boiler'),
+      L('Today', '12:20', 'assign', 'T-1039 assigned to Dana Ortiz', 'J. Reyes, facilities manager', 'Roof drain'),
+      L('Today', '12:00', 'assign', 'T-1037 assigned to Marcus Hill', 'J. Reyes, facilities manager', 'Rooftop AC 2'),
+      L('Today', '11:20', 'alert', 'Alert fired: vibration 7.9 mm/s at Rooftop AC 2', 'Sensor VB-R2', 'Rooftop AC 2'),
+      L('Today', '11:20', 'ticket', 'Ticket T-1037 opened for Rooftop AC 2', 'System', 'Rooftop AC 2'),
+      L('Yesterday', '16:12', 'resolved', 'T-1025 resolved: Roof vent 3 humidity back to normal', 'Dana Ortiz', 'Roof vent 3'),
+      L('Yesterday', '08:20', 'assign', 'T-1029 assigned to Priya Nair', 'J. Reyes, facilities manager', 'Boiler'),
+      L('24 Sep', '10:02', 'resolved', 'T-1019 resolved: Water pipe B leak noise stopped', 'Priya Nair', 'Water pipe B'),
+      L('23 Sep', '17:40', 'offline', 'Sensor PR-V7 stopped reporting', 'Sensor PR-V7', 'Water valve pit'),
+      L('23 Sep', '15:40', 'resolved', 'T-1016 resolved: Water pump vibration back to baseline', 'Marcus Hill', 'Water pump'),
       L('12 Sep', '09:05', 'ticket', 'Site onboarded from a blueprint scan', 'J. Reyes, facilities manager', 'Site')
     ];
     const TYPES = {
@@ -515,14 +516,14 @@ export default class Main extends Component {
   chatIndex() {
     const D = this.data();
     if (this.CI) return this.CI;
-    const WORDS = { 'PR-B1': ['boiler'], 'TH-EL': ['panel', 'breaker', 'electrical panel'], 'SR-L1': ['sprinkler', 'sprinklers'], 'EV-E1': ['elevator', 'lift'], 'CR-PS': ['parapet', 'crack'], 'MS-DN': ['drain', 'north drain', 'roof drain'], 'PR-V7': ['valve pit', 'pit'], 'VB-P2': ['pump'] };
+    const WORDS = { 'PR-B1': ['boiler'], 'TH-EL': ['panel', 'breaker', 'electrical panel'], 'SR-L1': ['sprinkler', 'sprinklers'], 'EV-E1': ['elevator', 'lift'], 'CR-PS': ['roof edge wall', 'crack'], 'MS-DN': ['drain', 'north drain', 'roof drain'], 'PR-V7': ['valve pit', 'pit'], 'VB-P2': ['pump'] };
     const idx = D.list.map((x) => {
       const subs = [this.squash(x.zone), this.squash(x.id), this.squash(x.zone.replace(/\b([A-Z])-?(\d)/g, '$2'))].filter((q) => q.length >= 4);
       const words = (WORDS[x.id] || []).slice();
       if (/\d/.test(x.short)) { words.push(x.short.toLowerCase().replace(/-/g, '')); words.push(x.short.toLowerCase().replace(/-/g, ' ')); }
       return { x, subs, words };
     });
-    const GROUPS = { vent: (x) => /^Vent/.test(x.zone), hydrant: (x) => /^Hydrant/.test(x.zone), pier: (x) => /^Pier/.test(x.zone), riser: (x) => /^Riser/.test(x.zone), rtu: (x) => /^RTU/.test(x.zone) };
+    const GROUPS = { vent: (x) => /^Roof vent/.test(x.zone), hydrant: (x) => /^Fire hydrant/.test(x.zone), pier: (x) => /^Parking column/.test(x.zone), pipe: (x) => /^Water pipe/.test(x.zone), rtu: (x) => /^Rooftop AC/.test(x.zone) };
     this.CI = { idx, GROUPS };
     return this.CI;
   }
@@ -649,11 +650,11 @@ export default class Main extends Component {
 
     if (it === 'greet') return say('Hi. I am watching ' + D.list.length + ' sensors at Northside Annex. ' + open.length + ' things need a decision and ' + open.filter((q) => q.st === 'crit').length + ' of them are urgent. Ask me about any sensor, ticket or technician.', [{ label: 'What should I fix first?', kind: 'ask', q: 'What should I fix first?' }]);
     if (it === 'thanks') return say('Anytime. I am here if anything else comes up.');
-    if (it === 'app_help') return say('I can see the live state of this site. Try things like:\n• What is wrong with Vent 6?\n• Who should fix RTU-2?\n• Assign it to Dana\n• Which tickets are overdue?\n• How do I get to Riser A?\n• What happened today?');
+    if (it === 'app_help') return say('I can see the live state of this site. Try things like:\n• What is wrong with Roof vent 6?\n• Who should fix Rooftop AC 2?\n• Assign it to Dana\n• Which tickets are overdue?\n• How do I get to Water pipe A?\n• What happened today?');
     if (it === 'app_bp') return say('On the Site screen, tap Add site and photograph the floor plan. The app builds a 3D model you can rotate and places the paired sensors on it.', [{ label: 'Start a blueprint scan', kind: 'bp' }]);
     if (it === 'pair') return say('Your site code is ' + s.siteCode + '. On the Sensors screen, tap Pair a device and scan the code on the back of the sensor. It links to this dashboard and shows on the map as soon as it sends a reading.', [{ label: 'Pair a device', kind: 'pair' }]);
     if (it === 'power') {
-      if (!x) return say('Which sensor? Try "pause Vent 6" or "turn RTU-2 back on".');
+      if (!x) return say('Which sensor? Try "pause Roof vent 6" or "turn Rooftop AC 2 back on".');
       const wantOff = / (pause|off) /.test(p.n);
       const offNow = !!s.devOff[x.id];
       if (wantOff === offNow) return say(x.zone + ' is already ' + (offNow ? 'paused' : 'on') + '.', [{ label: 'Open controls', kind: 'dev', id: x.id }]);
@@ -666,7 +667,7 @@ export default class Main extends Component {
     }
 
     if (it === 'assign') {
-      if (!x) return say('Which one should I assign? Try something like "assign Vent 6 to Dana".');
+      if (!x) return say('Which one should I assign? Try something like "assign Roof vent 6 to Dana".');
       const info = this.tkInfo(x);
       if (!x.problem && !x.off) return say(x.zone + ' is reading normally, so there is no ticket to assign.');
       if (info.status === 'resolved') return say(info.id + ' is already resolved.');
@@ -687,7 +688,7 @@ export default class Main extends Component {
       return say('Marked ' + info.id + ' resolved. ' + x.zone + ' moves to Recently resolved, and the sensor will confirm once readings settle back near ' + x.baseStr + '.');
     }
     if (it === 'walk') {
-      if (!x) return say('Where do you want to go? Name a sensor or area, like Riser A or Vent 6.');
+      if (!x) return say('Where do you want to go? Name a sensor or area, like Water pipe A or Roof vent 6.');
       const r = this.routeFor(s.origin, x);
       return say(x.zone + ' is on ' + (x.level === 'roof' ? 'the roof' : x.levelName) + ', about ' + r.meters + ' m from ' + s.origin.name + ' (' + this.eta(r.meters) + ' on foot). First step: ' + r.steps[0].text.charAt(0).toLowerCase() + r.steps[0].text.slice(1) + '. The sensor is ' + x.mount + '.', [{ label: 'Walk there', kind: 'walk', id: x.id, pri: true }]);
     }
@@ -774,8 +775,8 @@ export default class Main extends Component {
       out.ctx.sensor = top[0].id;
       return say('Start with these:\n' + top.map((q) => this.listLine(q)).join('\n') + '\n\n' + top[0].zone + ' comes first: ' + (this.tkInfo(top[0]).status === 'overdue' ? 'it is already overdue.' : 'it is the most urgent.'), this.chipsFor(top[0]));
     }
-    if (it === 'why' || it === 'trend' || it === 'walk') return say('Which sensor do you mean? You can name it, like Vent 6, RTU-2 or Riser A.');
-    return say('I could not match that to a sensor or topic. Try naming a place like Vent 6 or Boiler B-1, or ask what needs attention, what is overdue, or who is on site.', [{ label: 'What needs attention?', kind: 'ask', q: 'What needs attention?' }]);
+    if (it === 'why' || it === 'trend' || it === 'walk') return say('Which sensor do you mean? You can name it, like Roof vent 6, Rooftop AC 2 or Water pipe A.');
+    return say('I could not match that to a sensor or topic. Try naming a place like Roof vent 6 or Boiler, or ask what needs attention, what is overdue, or who is on site.', [{ label: 'What needs attention?', kind: 'ask', q: 'What needs attention?' }]);
   }
   ask(q) {
     const text = (q || '').trim();
@@ -860,7 +861,7 @@ export default class Main extends Component {
     });
     const sugg = ctxX
       ? ['What is wrong with ' + ctxX.zone + '?', 'Who should fix it?', 'How do I get there?', 'Is it getting worse?']
-      : ['What should I fix first?', 'Which tickets are overdue?', 'Tell me about RTU-2', 'Any sensors offline?', 'Who is on site?'];
+      : ['What should I fix first?', 'Which tickets are overdue?', 'Tell me about Rooftop AC 2', 'Any sensors offline?', 'Who is on site?'];
 
     return {
       scrAnim: s.navDir < 0 ? 'ns-in-l' : 'ns-in-r',
@@ -986,7 +987,7 @@ export default class Main extends Component {
       if (!A.roof && !A.floors && !A.mech) need('Water sensors', 'the roof, mechanical rooms or floors');
     } else skip('Water sensors', 'for water getting in', tr.leaks ? 'You mentioned leaks before, so you may want this.' : '');
     if (W.pipes) {
-      if (A.walls || A.floors) add('pipel', 'Pipe leak sensors', SI.acoustic, risers * Math.ceil(F / 2), 'Spread along about ' + plural(risers, 'riser') + ' so a leak is heard inside the wall before it shows.', 'water');
+      if (A.walls || A.floors) add('pipel', 'Pipe leak sensors', SI.acoustic, risers * Math.ceil(F / 2), 'Spread along about ' + plural(risers, 'pipe') + ' so a leak is heard inside the wall before it shows.', 'water');
       if (A.mech) add('press', 'Pressure sensors', SI.pressure, 2 + (tr.leaks ? 1 : 0), 'On the main supply and the boiler loop. A slow drop in pressure points to a hidden leak.', 'water');
       if (!A.walls && !A.floors && !A.mech) need('Pipe leak sensors', 'inside walls, floors or mechanical rooms');
     } else skip('Pipe leak and pressure sensors', 'pipes', !W.water && tr.leaks ? 'You mentioned leaks before, so you may want this.' : '');
@@ -999,7 +1000,7 @@ export default class Main extends Component {
     } else skip('Vibration sensors', 'equipment', tr.hvac ? 'You mentioned breakdowns before, so you may want this.' : '');
     if (W.heat) {
       if (A.elec || A.floors) add('therm', 'Panel heat sensors', SI.thermal, (A.floors ? F : 0) + (A.elec ? 2 : 0) + (tr.electrical ? 2 : 0), 'Inside panel doors' + (A.floors ? ', one per floor' : '') + '. Hot connections are an early fire warning' + (tr.electrical ? ', so panels with past problems get an extra.' : '.'), 'elec');
-      if (A.walls || A.mech) add('sprp', 'Sprinkler pressure sensors', SI.pressure, risers, 'One per sprinkler riser, so a closed valve or leak shows up before a fire test does.', 'elec');
+      if (A.walls || A.mech) add('sprp', 'Sprinkler pressure sensors', SI.pressure, risers, 'One per sprinkler pipe, so a closed valve or leak shows up before a fire test does.', 'elec');
       if (!A.elec && !A.floors && !A.walls && !A.mech) need('Heat and sprinkler sensors', 'electrical rooms, floors, walls or mechanical rooms');
     } else skip('Panel heat and sprinkler sensors', 'heat and fire risk', tr.electrical ? 'You mentioned electrical problems before, so you may want this.' : '');
     if (W.structure) {
@@ -1284,13 +1285,13 @@ export default class Main extends Component {
     const art = (i) => (i === idx ? 'rotate(0deg) scale(1)' : 'rotate(' + (i < idx ? -4 : 4) + 'deg) scale(0.88)');
     const out = {
       isOnb, isIntro: scr === 'intro', isAuth: scr === 'auth', isDiag: scr === 'diag',
-      goSignup: () => this.go('auth', { authMode: 'signup' }), goLogin: () => this.go('auth', { authMode: 'login' }),
+      goSignup: () => this.skipToDashboard(), goLogin: () => this.skipToDashboard(),
       goIntro: () => { this.go('intro', { introTouched: true }); },
       introDown: (e) => { this.ix = e.clientX; },
       introUp: (e) => { if (this.ix == null) return; const dx = e.clientX - this.ix; this.ix = null; if (dx < -40) this.introGo(idx + 1); else if (dx > 40) this.introGo(idx - 1); },
       introDots: [0, 1, 2, 3].map((i) => ({ sel: String(i === idx), aria: 'Slide ' + (i + 1) + ' of 4', w: i === idx ? 26 : 7, bg: i === idx ? 'var(--acc)' : 'var(--line2)', pick: () => this.introGo(i) })),
       introCta: idx < 3 ? 'Next' : 'Get started',
-      introPrimary: () => { if (idx < 3) this.introGo(idx + 1); else this.go('auth', { authMode: 'signup' }); },
+      introPrimary: () => { if (idx < 3) this.introGo(idx + 1); else this.go('diag', { diagStep: 0, diagDir: 1 }); },
       authTitle: s.authMode === 'signup' ? 'Create your account' : 'Welcome back',
       authSub: s.authMode === 'signup' ? 'Set up takes about two minutes, including a short checkup of your building.' : 'Log in to see what your sensors are saying.',
       authThumb: s.authMode === 'signup' ? 0 : 100,
@@ -1320,7 +1321,7 @@ export default class Main extends Component {
     out.diagAnim = (s.diagDir < 0 ? 'ns-in-l' : 'ns-in-r') + (s.diagFlip ? '2' : '');
     out.diagBack = () => {
       const c = this.state.diagStep;
-      if (c === 0) this.go('auth', { authMode: 'signup' });
+      if (c === 0) this.go('intro');
       else this.setState({ diagStep: c - 1, diagDir: -1, diagFlip: !this.state.diagFlip });
     };
     const radii = ['26px 26px 26px 8px', '26px 8px 26px 26px', '8px 26px 26px 26px', '26px 26px 8px 26px'];
@@ -1824,8 +1825,19 @@ export default class Main extends Component {
     }
   }
 
+  skipToDashboard() { this.setState({ onboarded: true }); this.go('overview'); }
+
   render() {
     const v = this.renderVals();
+    // Scan sits second in the rail, so the highlight for Map/Sensors/Log moves down one slot.
+    const slot = { overview: 0, bp: 0, map: 1, sensors: 2, log: 3 }[this.state.screen] || 0;
+    if (slot >= 1) v.railTop = Number(v.railTop) + 62;
+    const onDashboard = !['intro', 'auth', 'diag'].includes(this.state.screen);
+    v.tour = onDashboard ? (
+      <Tour screen={this.state.screen} scanOpen={!!this.state.scanOpen}
+        busy={this.state.detOpen || this.state.chatOpen || this.state.devOpen || this.state.pairOpen}
+        onOpenScan={() => this.setState({ scanOpen: true })} />
+    ) : null;
     v.openScan = () => this.setState({ scanOpen: true });
     v.railScanFg = this.state.scanOpen ? 'var(--tx)' : '';
     const det = this.byId(this.state.detId);

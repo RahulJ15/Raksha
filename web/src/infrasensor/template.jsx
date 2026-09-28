@@ -24,6 +24,15 @@ export default function renderTemplate(v) {
           Site
         </span>
       </button>
+      <button className="ns-btn ns-rail" aria-label="Upload scan" onClick={v.openScan} style={css(`width: 44px; height: 52px; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: ${v.railScanFg}`)}>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path className="ns-ic" d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 14.5v4a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-4">
+          </path>
+        </svg>
+        <span style={css("font-size: 10px; line-height: 11px; font-weight: 700")}>
+          Scan
+        </span>
+      </button>
       <button className="ns-btn ns-rail" aria-label="Site map" onClick={v.navMap} style={css(`width: 44px; height: 52px; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: ${v.railMapFg}`)}>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path className="ns-ic" d="M12 20.5s6-5.4 6-10.5a6 6 0 0 0-12 0c0 5.1 6 10.5 6 10.5zM12 12.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z">
@@ -49,15 +58,6 @@ export default function renderTemplate(v) {
         </svg>
         <span style={css("font-size: 10px; line-height: 11px; font-weight: 700")}>
           Log
-        </span>
-      </button>
-      <button className="ns-btn ns-rail" aria-label="Upload scan" onClick={v.openScan} style={css(`width: 44px; height: 52px; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: ${v.railScanFg}`)}>
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path className="ns-ic" d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 14.5v4a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-4">
-          </path>
-        </svg>
-        <span style={css("font-size: 10px; line-height: 11px; font-weight: 700")}>
-          Scan
         </span>
       </button>
       <div style={css("flex-grow: 1")}>
@@ -267,7 +267,7 @@ export default function renderTemplate(v) {
             </button>
           </Fragment>))}
         </div>
-        <section style={css("margin-top: 10px")}>
+        <section data-tour="attention" style={css("margin-top: 10px")}>
           <div style={css("padding: 6px 16px 2px 6px; display: flex; align-items: center; gap: 10px")}>
             <h2 className="ns-serif" style={css("margin: 0; font-size: 24px; line-height: 28px; font-weight: 500")}>
               Needs attention
@@ -2203,7 +2203,7 @@ export default function renderTemplate(v) {
                   </em>
                 </h2>
                 <p style={css("margin: 0; font-size: 15px; line-height: 22px; color: var(--tx2)")}>
-                  Pull out your phone and follow the route to the exact vent, riser or panel. The sensor can even blink so you spot it.
+                  Pull out your phone and follow the route to the exact vent, pipe or panel. The sensor can even blink so you spot it.
                 </p>
               </div>
             </section>
@@ -2297,9 +2297,9 @@ export default function renderTemplate(v) {
               </svg>
             </button>
             <button className="ns-btn" onClick={v.goLogin} style={css("height: 38px; font-size: 14px; font-weight: 600; text-align: center; color: var(--tx2)")}>
-              I already have an account ·{' '}
+              Skip setup ·{' '}
               <span style={css("color: var(--tx); text-decoration: underline; text-underline-offset: 3px")}>
-                Log in
+                Go to the dashboard
               </span>
             </button>
           </div>
@@ -2763,6 +2763,7 @@ export default function renderTemplate(v) {
     {v.toastText}
   </div>
   {v.scanPanel}
+  {v.tour}
 </div>
   </>);
 }

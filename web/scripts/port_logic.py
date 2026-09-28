@@ -57,7 +57,7 @@ body = body.replace(
     "class Component extends DCLogic {",
     "// Ported from infrasensor/source/Main.dc.html. Sensor data arrives as props.site from the API.\n"
     "import { Component } from 'react';\nimport renderTemplate from './template';\nimport ScanPanel from './ScanPanel';\n"
-    "import InfoCard from './InfoCard';\nimport { MEASUREMENTS } from './glossary';\n\n"
+    "import InfoCard from './InfoCard';\nimport Tour from './Tour';\nimport { MEASUREMENTS } from './glossary';\n\n"
     "export default class Main extends Component {",
     1,
 )
@@ -77,8 +77,19 @@ body = body[:last] + """
     }
   }
 
+  skipToDashboard() { this.setState({ onboarded: true }); this.go('overview'); }
+
   render() {
     const v = this.renderVals();
+    // Scan sits second in the rail, so the highlight for Map/Sensors/Log moves down one slot.
+    const slot = { overview: 0, bp: 0, map: 1, sensors: 2, log: 3 }[this.state.screen] || 0;
+    if (slot >= 1) v.railTop = Number(v.railTop) + 62;
+    const onDashboard = !['intro', 'auth', 'diag'].includes(this.state.screen);
+    v.tour = onDashboard ? (
+      <Tour screen={this.state.screen} scanOpen={!!this.state.scanOpen}
+        busy={this.state.detOpen || this.state.chatOpen || this.state.devOpen || this.state.pairOpen}
+        onOpenScan={() => this.setState({ scanOpen: true })} />
+    ) : null;
     v.openScan = () => this.setState({ scanOpen: true });
     v.railScanFg = this.state.scanOpen ? 'var(--tx)' : '';
     const det = this.byId(this.state.detId);
@@ -102,6 +113,17 @@ body = body.replace("""  data() {
 """, 1)
 assert "      D.list.push(p);\n" in body
 body = body.replace("      D.list.push(p);\n", "      D.list.push(p);\n      (this.paired = this.paired || new Set()).add(p.id);\n", 1)
+# --- Demo-day changes -----------------------------------------------------------------------------
+# No accounts: every route into the sign-up/login screen skips it. "Skip" and the old "Log in" link go
+# straight to the dashboard; finishing the welcome slides goes to the checkup.
+for old, new in [
+    ("goSignup: () => this.go('auth', { authMode: 'signup' }), goLogin: () => this.go('auth', { authMode: 'login' }),",
+     "goSignup: () => this.skipToDashboard(), goLogin: () => this.skipToDashboard(),"),
+    ("else this.go('auth', { authMode: 'signup' }); },", "else this.go('diag', { diagStep: 0, diagDir: 1 }); },"),
+    ("if (c === 0) this.go('auth', { authMode: 'signup' });", "if (c === 0) this.go('intro');"),
+]:
+    assert body.count(old) == 1, old
+    body = body.replace(old, new)
 (d / "Main.jsx").write_text(body.lstrip())
 (d / "logic.raw.js").unlink()
 print("ok")

@@ -270,7 +270,7 @@ async def verdict(model: str, file: UploadFile = File(...)) -> dict:
     except VerdictUnavailable as e:
         raise HTTPException(503, str(e))
     except Exception as e:  # network / quota / safety errors from Gemini
-        raise HTTPException(502, f"Gemini request failed: {e}")
+        raise HTTPException(502, f"AI explanation failed: {e}")
 
 
 # Serve the built UI (web/dist) at / when present.

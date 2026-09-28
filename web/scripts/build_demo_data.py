@@ -44,8 +44,9 @@ def main() -> None:
         if item.get("type"):
             try:
                 verdict = post(f"/api/verdict/{item['type']}", [("file", path.name, raw)])
+                verdict.pop("model", None)  # the app doesn't name the AI provider
             except Exception as e:  # keep going without a verdict for this file
-                verdict = {"error": f"Gemini unavailable when this demo was built ({e})"}
+                verdict = {"error": f"AI explanation unavailable when this demo was built ({e})"}
         thumb = None
         if path.suffix.lower() in IMAGE_EXT:
             thumb = f"files/{path.parent.name}__{path.name}"

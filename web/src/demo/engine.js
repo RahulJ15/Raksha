@@ -118,7 +118,7 @@ export async function scan(files, overrides, assetId) {
 
 export async function verdict(type, file) {
   const sample = (await load()).samples.find((s) => s.name === file.name);
-  if (!sample?.verdict) throw new Error('No Gemini explanation saved for this file in the demo.');
+  if (!sample?.verdict) throw new Error('No AI explanation saved for this file in the demo.');
   if (sample.verdict.error) throw new Error(sample.verdict.error);
-  return { ...sample.verdict, model: `${sample.verdict.model}, generated ahead of time` };
+  return { ...sample.verdict, model: 'generated ahead of time' };
 }

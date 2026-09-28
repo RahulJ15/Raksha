@@ -62,7 +62,7 @@ def gemini_verdict(model: str, image: Image.Image, result: dict) -> dict:
     """Ask Gemini to explain (and sanity-check) a classifier result for one spectrogram."""
     key = _api_key()
     if not key:
-        raise VerdictUnavailable("No Gemini key. Add GEMINI_API_KEY=... to the .env file in the repo root.")
+        raise VerdictUnavailable("AI explanations are not set up: add GEMINI_API_KEY=... to the .env file in the repo root.")
 
     from google import genai
     from google.genai import types
