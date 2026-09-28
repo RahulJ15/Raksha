@@ -84,7 +84,8 @@ HEALTH_SCORE_RED: float = 40.0
 
 # --- Cost projections ------------------------------------------------------
 
-# Rough per-issue-type cost estimates used for the alert feed's cost projection column.
+# UNSOURCED PLACEHOLDERS from the original prototype, used only by the old Streamlit demo's synthetic alert feed.
+# NOT shown in the Raksha app and NOT real data. The app's cost figures are cited in web/src/infrasensor/evidence.js.
 COST_PROJECTIONS: dict[str, dict[str, float]] = {
     "healthy": {"fix_now": 0.0, "emergency": 0.0},
     "healthy_motor": {"fix_now": 0.0, "emergency": 0.0},

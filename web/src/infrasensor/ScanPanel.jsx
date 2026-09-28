@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import InfoCard, { InfoIcon } from './InfoCard';
 import { RESULTS, resultKey } from './glossary';
 import * as api from '../api';
+import { ConfidenceRing, CostLadder, Disclosure, FixEarlyCard } from './Infographics';
 
 export const TYPE_LABEL = { machine: 'Sound + vibration', sound: 'Microphone', bearing: 'Vibration spectrogram', thermal: 'Thermal camera',
   crack: 'Crack photo', strain_live: 'Strain gauge', crack_live: 'Crack gauge',
@@ -200,22 +201,32 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
 
       {result && open && (
         <div style={{ padding: '4px 12px 14px', borderTop: '1px solid var(--line)', animation: 'ns-enter 280ms ease both' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: tone }}>{status}</span>
-            <span className="ns-num" style={{ fontSize: 13, color: 'var(--tx2)' }}>{TYPE_LABEL[type]} model</span>
+          {/* 1. The answer at a glance */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '12px 0 10px' }}>
+            <ConfidenceRing p={result.confidence} color={tone} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: tone }}>{status}</div>
+              <div className="ns-serif" style={{ fontSize: 26, lineHeight: '30px', fontWeight: 500 }}>{pretty(result.name)}</div>
+              <div style={{ fontSize: 12, color: 'var(--tx2)' }}>{confWord(result.confidence)} · {TYPE_LABEL[type]}</div>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '2px 0 12px' }}>
-            <span className="ns-serif" style={{ fontSize: 28, lineHeight: '34px', fontWeight: 500, flexGrow: 1 }}>{pretty(result.name)}</span>
-            <span style={{ textAlign: 'right' }}>
-              <span className="ns-num" style={{ display: 'block', fontSize: 28, fontWeight: 700, color: tone }}>{fmtPct(result.confidence)}</span>
-              <span style={{ fontSize: 11, color: 'var(--tx2)' }}>{confWord(result.confidence)}</span>
-            </span>
-          </div>
+          {explain(result.name) && (
+            <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: '20px' }}>{explain(result.name).what.split('. ')[0].replace(/\.$/, '')}.</p>
+          )}
           {result.early_warning && (
-            <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: '18px', color: 'var(--tx2)' }}>
-              The model leans healthy ({fmtPct(result.probs.healthy)}) but not confidently enough to clear it, so this is flagged early. Worth a check on the next visit.
+            <p style={{ margin: '0 0 10px', padding: '8px 10px', borderRadius: 12, background: 'var(--panel2)', fontSize: 12, lineHeight: '17px' }}>
+              ⚠︎ Early warning: the model leans healthy ({fmtPct(result.probs.healthy)}) but isn't sure, so check it on the next visit.
             </p>
           )}
+
+          {/* 2. What to do next, as chips (from the AI explanation once it arrives) */}
+          {verdict && !verdictBusy && result.fault && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              <span style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--panel2)', fontSize: 12 }}>⏱ <strong>{verdict.urgency}</strong></span>
+              <span style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--panel2)', fontSize: 12 }}>👷 <strong>{verdict.who}</strong></span>
+            </div>
+          )}
+
           {result.sensors && <SensorBreakdown result={result} />}
           {type === 'crack' && result.preview && (
             <figure style={{ margin: '0 0 12px' }}>
@@ -225,33 +236,45 @@ function ItemCard({ file, thumb, item, busy, override, onType, onRemove, startOp
               </figcaption>
             </figure>
           )}
-          <div style={{ marginBottom: 14 }}>
-            <InfoCard key={`${type}:${result.name}`} entry={explain(result.name)} open label="What does this mean?" />
-          </div>
-          <ReliabilityCard model={type} />
-          {probs.map(([label, p]) => (
-            <div key={label} style={{ display: 'grid', gridTemplateColumns: '1fr 44px', alignItems: 'center', gap: '4px 10px', marginBottom: 8 }}>
-              <span style={{ fontSize: 13, color: 'var(--tx2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {pretty(label)}
-                {explain(label) && (
-                  <button className="ns-btn" aria-label={`What is ${pretty(label).toLowerCase()}?`} aria-expanded={infoFor === label}
-                    onClick={() => setInfoFor(infoFor === label ? null : label)} style={{ display: 'flex', color: infoFor === label ? 'var(--acc)' : 'var(--tx2)' }}>
-                    <InfoIcon size={15} />
-                  </button>
+
+          {/* 3. Why it matters, with cited real-world figures */}
+          {result.fault && result.label === 'pipe_leak' && <CostLadder />}
+          {result.fault && result.label !== 'pipe_leak' && ['machine', 'bearing', 'thermal', 'sound'].includes(type) && <FixEarlyCard />}
+
+          {/* 4. The detail, folded away */}
+          <Disclosure title="What this means" summary={explain(result.name) ? `Check first: ${explain(result.name).check.split('. ')[0].replace(/\.$/, '')}` : ''}>
+            <InfoCard key={`${type}:${result.name}`} entry={explain(result.name)} open label="In plain words" />
+          </Disclosure>
+          <Disclosure title="AI explanation" summary={verdictBusy ? 'Writing…' : verdict?.headline || verdictErr || ''}>
+            <VerdictCard verdict={verdict} busy={verdictBusy} error={verdictErr} bare />
+          </Disclosure>
+          <Disclosure title="All possibilities" summary={probs.slice(0, 3).map(([l, p]) => `${pretty(l)} ${fmtPct(p)}`).join(' · ')}>
+            {probs.map(([label, p]) => (
+              <div key={label} style={{ display: 'grid', gridTemplateColumns: '1fr 44px', alignItems: 'center', gap: '4px 10px', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--tx2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {pretty(label)}
+                  {explain(label) && (
+                    <button className="ns-btn" aria-label={`What is ${pretty(label).toLowerCase()}?`} aria-expanded={infoFor === label}
+                      onClick={() => setInfoFor(infoFor === label ? null : label)} style={{ display: 'flex', color: infoFor === label ? 'var(--acc)' : 'var(--tx2)' }}>
+                      <InfoIcon size={15} />
+                    </button>
+                  )}
+                </span>
+                <span className="ns-num" style={{ fontSize: 13, textAlign: 'right' }}>{fmtPct(p)}</span>
+                <span style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'var(--panel2)', overflow: 'hidden' }}>
+                  <span style={{ display: 'block', height: '100%', width: `${p * 100}%`, borderRadius: 3, background: label === result.label || pretty(label) === pretty(result.name) ? tone : 'var(--line2)' }} />
+                </span>
+                {infoFor === label && (
+                  <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
+                    <InfoCard key={label} entry={explain(label)} open />
+                  </div>
                 )}
-              </span>
-              <span className="ns-num" style={{ fontSize: 13, textAlign: 'right' }}>{fmtPct(p)}</span>
-              <span style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'var(--panel2)', overflow: 'hidden' }}>
-                <span style={{ display: 'block', height: '100%', width: `${p * 100}%`, borderRadius: 3, background: label === result.label || pretty(label) === pretty(result.name) ? tone : 'var(--line2)', transition: 'width 500ms cubic-bezier(.3,1.2,.5,1)' }} />
-              </span>
-              {infoFor === label && (
-                <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
-                  <InfoCard key={label} entry={explain(label)} open />
-                </div>
-              )}
-            </div>
-          ))}
-          <VerdictCard verdict={verdict} busy={verdictBusy} error={verdictErr} />
+              </div>
+            ))}
+          </Disclosure>
+          <Disclosure title="How reliable is this model?" summary="Tested on data it never saw">
+            <ReliabilityCard model={type} bare />
+          </Disclosure>
         </div>
       )}
     </div>
@@ -264,10 +287,10 @@ const AGREE = {
   unsure: { text: 'Not sure', color: 'var(--watch)' },
 };
 
-function VerdictCard({ verdict, busy, error }) {
+function VerdictCard({ verdict, busy, error, bare = false }) {
   const label = { fontSize: 12, fontWeight: 700, color: 'var(--tx2)', margin: '12px 0 3px' };
   return (
-    <div style={{ marginTop: 18, padding: 16, borderRadius: 20, background: 'var(--bg)', border: '1.5px solid var(--line)' }}>
+    <div style={bare ? {} : { marginTop: 18, padding: 16, borderRadius: 20, background: 'var(--bg)', border: '1.5px solid var(--line)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style={{ color: 'var(--acc)' }}><path className="ns-ic" d="M12 3.5c.6 4.4 4.1 7.9 8.5 8.5-4.4.6-7.9 4.1-8.5 8.5-.6-4.4-4.1-7.9-8.5-8.5 4.4-.6 7.9-4.1 8.5-8.5z" /></svg>
         <span style={{ fontSize: 14, fontWeight: 700, flexGrow: 1 }}>AI explanation</span>
@@ -372,9 +395,9 @@ function AssetCard({ asset, items, live, machine }) {
 
 let cardsPromise = null;
 // How well the model does on data it never saw, including the hard tests. Shown so nobody mistakes confidence for accuracy.
-function ReliabilityCard({ model }) {
+function ReliabilityCard({ model, bare = false }) {
   const [cards, setCards] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(bare);
   useEffect(() => {
     cardsPromise = cardsPromise || api.getModels().catch(() => null);
     cardsPromise.then(setCards);
@@ -382,19 +405,24 @@ function ReliabilityCard({ model }) {
   const c = cards?.[model];
   if (!c) return null;
   return (
-    <div style={{ marginBottom: 14, borderRadius: 16, border: '1.5px solid var(--line)' }}>
-      <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)}
+    <div style={bare ? {} : { marginBottom: 14, borderRadius: 16, border: '1.5px solid var(--line)' }}>
+      {!bare && <button className="ns-btn" aria-expanded={open} onClick={() => setOpen(!open)}
         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', fontSize: 13, fontWeight: 700 }}>
         <span style={{ flexGrow: 1 }}>How reliable is this model?</span>
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 220ms' }}><path className="ns-ic" d="M6 9l6 6 6-6" /></svg>
-      </button>
+      </button>}
       {open && (
-        <div style={{ padding: '0 12px 12px', fontSize: 13, lineHeight: '19px' }}>
+        <div style={{ padding: bare ? 0 : '0 12px 12px', fontSize: 13, lineHeight: '19px' }}>
           <p style={{ margin: '0 0 8px', color: 'var(--tx2)' }}>{c.data}</p>
           {c.tests.filter(([, v]) => v != null).map(([name, [acc, correct, total]]) => (
-            <div key={name} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '3px 0', borderTop: '1px solid var(--line)' }}>
-              <span>{name}</span>
-              <span className="ns-num" style={{ textAlign: 'right' }}><strong>{correct.toLocaleString()} of {total.toLocaleString()}</strong> right ({Math.round(acc * 100)}%)</span>
+            <div key={name} style={{ padding: '5px 0', borderTop: '1px solid var(--line)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <span>{name}</span>
+                <span className="ns-num" style={{ textAlign: 'right' }}><strong>{Math.round(acc * 100)}%</strong> ({correct.toLocaleString()} of {total.toLocaleString()})</span>
+              </div>
+              <span style={{ display: 'block', height: 6, marginTop: 4, borderRadius: 3, background: 'var(--panel2)', overflow: 'hidden' }}>
+                <span style={{ display: 'block', height: '100%', width: `${acc * 100}%`, background: acc >= 0.9 ? 'var(--ok)' : acc >= 0.75 ? 'var(--watch)' : 'var(--crit)' }} />
+              </span>
             </div>
           ))}
           <p style={{ margin: '8px 0 0', color: 'var(--tx2)' }}>{c.caveat}</p>
